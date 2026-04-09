@@ -1,6 +1,8 @@
+// 
+
 import { json } from '@sveltejs/kit';
 import bcrypt from 'bcryptjs';
-import { db } from '$lib/server/db';
+import pool from '$lib/server/db';
 
 export const POST = async ({ request }) => {
   const {
@@ -29,13 +31,13 @@ export const POST = async ({ request }) => {
     return json({ message: 'Use company email' }, { status: 400 });
   }
 
-  // 🔍 CHECK EXISTING USER (email OR cik)
-  const [existing] = await db.execute(
-    'SELECT * FROM users WHERE email=? OR cik=?',
+  // 🔍 CHECK EXISTING USER
+  const existingResult = await pool.query(
+    'SELECT * FROM users WHERE email = $1 OR cik = $2',
     [email, formattedCIK]
   );
 
-  if (existing.length > 0) {
+  if (existingResult.rows.length > 0) {
     return json(
       { message: 'Matched record already exists. Please sign in instead.' },
       { status: 400 }
@@ -43,16 +45,16 @@ export const POST = async ({ request }) => {
   }
 
   // 🔍 CIK lookup
-  const [rows] = await db.execute(
-    'SELECT org_name FROM cik_registry WHERE cik=?',
+  const cikResult = await pool.query(
+    'SELECT org_name FROM cik_registry WHERE cik = $1',
     [formattedCIK]
   );
 
   let finalOrg = '';
   let verified = false;
 
-  if (rows.length > 0) {
-    finalOrg = rows[0].org_name;
+  if (cikResult.rows.length > 0) {
+    finalOrg = cikResult.rows[0].org_name;
     verified = true;
   } else {
     finalOrg = filer_name;
@@ -60,10 +62,10 @@ export const POST = async ({ request }) => {
 
   const hash = await bcrypt.hash(password, 10);
 
-  await db.execute(
+  await pool.query(
     `INSERT INTO users 
     (org_name, cik, email, contact_name, password_hash, verified)
-    VALUES (?, ?, ?, ?, ?, ?)`,
+    VALUES ($1, $2, $3, $4, $5, $6)`,
     [finalOrg, formattedCIK, email, contact_name, hash, verified]
   );
 

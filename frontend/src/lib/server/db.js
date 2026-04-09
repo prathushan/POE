@@ -1,8 +1,20 @@
-import mysql from 'mysql2/promise';
+// import mysql from 'mysql2/promise';
 
-export const db = mysql.createPool({
+// export const db = mysql.createPool({
+//   host: 'localhost',
+//   user: 'root',
+//   password: '',
+//   database: 'poe'
+// });
+import pkg from 'pg';
+const { Pool } = pkg;
+
+const pool = new Pool({
+  user: 'prathushanammi',
   host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'poe'
+  database: 'poe',
+  password: '', // leave empty if no password
+  port: 5433, // IMPORTANT
 });
+
+export default pool;

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
 
   let search = $state("");
+  let prevSearch = ""; // ✅ FIX ADDED
   let filings = $state([]);
   let selectedFiling = $state(null);
   let stats = $state({
@@ -10,6 +11,7 @@
     filers: 0,
     pending: 0,
   });
+
   function openModal(filing) {
     selectedFiling = filing;
   }
@@ -17,42 +19,47 @@
   function closeModal() {
     selectedFiling = null;
   }
-  // ✅ pagination
+
+  // pagination
   let currentPage = $state(1);
   const pageSize = 10;
 
-  // onMount(async () => {
-  //   const res = await fetch("/api/filings/public");
-  //   filings = await res.json();
-  // });
-
-
   onMount(async () => {
- const res = await fetch("/api/filings/public");
- filings = await res.json();
-
- console.log(filings); // 👈 CHECK HERE
-});
-
-  onMount(async () => {
-    // filings (approved only)
     const res = await fetch("/api/filings/public");
     filings = await res.json();
 
-    // stats (all filings)
     const statsRes = await fetch("/api/filings/stats");
     stats = await statsRes.json();
   });
-  // ✅ safe pagination function (NO reactive issues)
+
   function getPaginated() {
     const start = (currentPage - 1) * pageSize;
-    return filings.slice(start, start + pageSize);
+    return filteredFilings.slice(start, start + pageSize);
   }
 
   function totalPages() {
-    return Math.ceil(filings.length / pageSize) || 1;
+    return Math.ceil(filteredFilings.length / pageSize) || 1;
+  }
+
+  $: filteredFilings = filings.filter((f) => {
+    const term = search.toLowerCase();
+
+    return (
+      f.company_name?.toLowerCase().includes(term) ||
+      f.filer_name?.toLowerCase().includes(term) ||
+      f.company_cik?.includes(term) ||
+      f.filer_cik?.includes(term) ||
+      f.accession_number?.toLowerCase().includes(term)
+    );
+  });
+
+  // ✅ reset page on search change
+  $: if (search !== prevSearch) {
+    currentPage = 1;
+    prevSearch = search;
   }
 </script>
+
 
 <!-- SEARCH HERO -->
 <div class="search-hero">
@@ -89,7 +96,8 @@
         Showing {(currentPage - 1) * pageSize + 1}
         –
         {Math.min(currentPage * pageSize, filings.length)}
-        of {filings.length} filings
+        <!-- of {filings.length} filings -->
+       of {filteredFilings.length} filings 
       {/if}
     </p>
 

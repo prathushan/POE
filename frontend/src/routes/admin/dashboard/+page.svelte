@@ -91,6 +91,9 @@
     closeModal();
   }
 </script>
+<svelte:head>
+  <title>POE | Admin Dashboard</title>
+</svelte:head>
 
 <div class="container">
   <h2 class="title">Filing Administration</h2>

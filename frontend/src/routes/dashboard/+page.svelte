@@ -74,7 +74,9 @@
     }
   }
 </script>
-
+<svelte:head>
+  <title>POE | Submit Filing</title>
+</svelte:head>
 <div class="auth-wrapper">
   <div class="auth-card">
     <div class="auth-logo">POE</div>

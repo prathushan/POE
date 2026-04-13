@@ -41,21 +41,9 @@
     return Math.ceil(filteredFilings.length / pageSize) || 1;
   }
 
-  // $: filteredFilings = filings.filter((f) => {
-  //   const term = search.toLowerCase();
-
-  //   return (
-  //     f.company_name?.toLowerCase().includes(term) ||
-  //     f.filer_name?.toLowerCase().includes(term) ||
-  //     f.company_cik?.includes(term) ||
-  //     f.filer_cik?.includes(term) ||
-  //     f.accession_number?.toLowerCase().includes(term)
-  //   );
-  // });
-const filteredFilings = $derived(
-  filings.filter((f) => {
+  $: filteredFilings = filings.filter((f) => {
     const term = search.toLowerCase();
- 
+
     return (
       f.company_name?.toLowerCase().includes(term) ||
       f.filer_name?.toLowerCase().includes(term) ||
@@ -63,17 +51,13 @@ const filteredFilings = $derived(
       f.filer_cik?.includes(term) ||
       f.accession_number?.toLowerCase().includes(term)
     );
-  })
-);
-  // ✅ reset page on search change
-  // $: if (search !== prevSearch) {
-  //   currentPage = 1;
-  //   prevSearch = search;
-  // }
+  });
 
-  $effect(() => {
-  currentPage = 1;
-});
+  // ✅ reset page on search change
+  $: if (search !== prevSearch) {
+    currentPage = 1;
+    prevSearch = search;
+  }
 </script>
 
 
@@ -308,7 +292,7 @@ const filteredFilings = $derived(
             <div class="stat-number">{stats.total}</div>
             <div class="stat-label">Total</div>
           </div>
-<!--new sectio -->
+
           <div class="stat-item">
             <div class="stat-number">
               {[...new Set(filings.map((f) => f.company_name))].length}

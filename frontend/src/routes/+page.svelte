@@ -75,7 +75,9 @@ const filteredFilings = $derived(
   currentPage = 1;
 });
 </script>
-
+<svelte:head>
+  <title>POE | Home</title>
+</svelte:head>
 
 <!-- SEARCH HERO -->
 <div class="search-hero">

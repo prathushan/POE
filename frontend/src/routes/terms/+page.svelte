@@ -1,6 +1,8 @@
 <script>
 </script>
-
+<svelte:head>
+  <title>POE | Terms of Use</title>
+</svelte:head>
 <div class="terms-container">
 
   <h1>Terms of Use</h1>

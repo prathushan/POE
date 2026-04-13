@@ -66,7 +66,9 @@
     }
   }
 </script>
-
+<svelte:head>
+  <title>POE | Sign Up</title>
+</svelte:head>
 <div class="auth-wrapper">
   <div class="auth-card">
 

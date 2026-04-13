@@ -1,3 +1,7 @@
+<svelte:head>
+  <title>POE | About</title>
+</svelte:head>
+
 <div class="container about-page">
 
   <h1>About the Proxy Open Exchange</h1>

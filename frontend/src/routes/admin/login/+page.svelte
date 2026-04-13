@@ -33,7 +33,9 @@
     }
   }
 </script>
-
+<svelte:head>
+  <title>POE | Admin Login</title>
+</svelte:head>
 <div class="auth-wrapper">
   <div class="auth-card">
 

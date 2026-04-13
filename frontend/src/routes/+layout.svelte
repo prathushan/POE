@@ -1,9 +1,11 @@
 <script>
   import '../app.css';
 </script>
-
+<svelte:head>
+  <title>POE | Proxy Open Exchange</title>
+</svelte:head>
 <!-- TOP BAR -->
-<div class="top-bar">
+<!-- <div class="top-bar">
   <div class="container">
     <span>POE — Public Proxy Filing System</span>
     <div class="top-links">
@@ -12,7 +14,7 @@
       <a href="/login">Sign In</a>
     </div>
   </div>
-</div>
+</div> -->
 
 <!-- HEADER -->
 <header>

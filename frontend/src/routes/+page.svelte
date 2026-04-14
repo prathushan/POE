@@ -122,10 +122,10 @@ const filteredFilings = $derived(
     <table class="filing-table">
       <thead>
         <tr>
-          <th>Filed</th>
+          <th>Posted</th>
           <th>Form</th>
           <th>Registrant</th>
-          <th>Filer</th>
+          <th>Company</th>
           <th>Accession</th>
         </tr>
       </thead>

@@ -27,7 +27,7 @@
       <div class="logo-seal">POE</div>
       <div class="logo-text">
         <h1>Proxy Open Exchange</h1>
-        <p>Shareholder Proxy Filing System</p>
+        <p>Shareholder Proxy Memo Publishing Platform</p>
       </div>
     </div>
 
@@ -35,7 +35,7 @@
       <a href="/">Home</a>
       <!-- <a href="/filings">Filings</a> -->
       <a href="/about">About</a>
-      <a href="/login">Submit Filing</a>
+      <a href="/login">Submit Proxy Memo</a>
       <a href="/login">Sign In </a>
       <a href="/signup">Sign Up</a>
     </nav>
@@ -79,8 +79,8 @@
       <div>
         <h5>Navigate</h5>
         <ul>
-          <li><a href="/">Browse Filings</a></li>
-          <li><a href="/login">Submit Filing</a></li>
+          <li><a href="/">Browse Proxy Memos</a></li>
+          <li><a href="/login">Submit Proxy Memo</a></li>
           <li><a href="/about">About POE</a></li>
           <li><a href="/terms">Terms of Use</a></li>
         </ul>
@@ -128,7 +128,7 @@
 
     <div class="footer-bottom">
       <span>© 2026 Proxy Open Exchange</span>
-      <span>All filings published under CC BY 4.0</span>
+      <span>All Proxy memos published under CC BY 4.0</span>
     </div>
 
   </div>

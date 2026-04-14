@@ -74,7 +74,7 @@
         <h5>Navigate</h5>
         <ul>
           <li><a href="/">Browse Filings</a></li>
-          <li><a href="/dashboard">Submit Filing</a></li>
+          <li><a href="/login">Submit Filing</a></li>
           <li><a href="/about">About POE</a></li>
           <li><a href="/terms">Terms of Use</a></li>
         </ul>

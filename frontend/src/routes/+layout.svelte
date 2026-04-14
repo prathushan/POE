@@ -3,6 +3,10 @@
 </script>
 <svelte:head>
   <title>POE | Proxy Open Exchange</title>
+
+  <link rel="icon" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <meta name="theme-color" content="#000000" />
 </svelte:head>
 <!-- TOP BAR -->
 <!-- <div class="top-bar">
@@ -76,7 +80,7 @@
         <h5>Navigate</h5>
         <ul>
           <li><a href="/">Browse Filings</a></li>
-          <li><a href="/dashboard">Submit Filing</a></li>
+          <li><a href="/login">Submit Filing</a></li>
           <li><a href="/about">About POE</a></li>
           <li><a href="/terms">Terms of Use</a></li>
         </ul>

@@ -506,3 +506,70 @@ footer ul a:hover{color:var(--gold);}
   border-radius: 6px;
   border: 1px solid #ccc
 }
+
+@media (max-width: 1200px) {
+  .container {
+    padding: 40px 20px !important;
+  }
+}
+
+@media (max-width: 1200px) {
+
+  /* keep page clean */
+  .container {
+    padding: 0 20px;
+  }
+
+  /* make table behave like scroll container */
+  .filing-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* keep table structure intact */
+  .filing-table thead,
+  .filing-table tbody,
+  .filing-table tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  /* THIS is key: force wider content */
+  .filing-table th,
+  .filing-table td {
+    min-width: 140px;
+    white-space: nowrap;
+  }
+
+
+/* keep your scroll setup (don’t change it) */
+
+  .filing-table th,
+  .filing-table td {
+    padding: 12px 14px;   /* balanced */
+    vertical-align: top;
+  }
+
+  /* fix text spacing WITHOUT breaking layout */
+  .filing-table td {
+    line-height: 1.4;
+    white-space: normal;       /* allow wrapping */
+    word-break: break-word;
+  }
+
+  /* 🔥 IMPORTANT: don't force block everywhere */
+  .filing-table td strong {
+    display: inline;   /* back to normal */
+    margin-bottom: 0;
+  }
+
+  .sub {
+    display: block;    /* only this stays block */
+    font-size: 12px;
+    margin-top: 2px;
+    color: var(--g4);
+  }
+}

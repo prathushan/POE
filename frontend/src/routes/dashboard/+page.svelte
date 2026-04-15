@@ -81,7 +81,7 @@
   <div class="auth-card">
     <div class="auth-logo">POE</div>
 
-    <h2>Submit Filing</h2>
+    <h2>Submit Proxy Memo</h2>
 
     {#if user}
       <p class="auth-sub">

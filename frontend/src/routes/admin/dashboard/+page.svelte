@@ -154,7 +154,7 @@
 
   <!-- TABLE -->
   <div class="table-wrap">
-    <table>
+   <table class="filing-table">
       <thead>
         <tr>
           <th>DATE</th>
@@ -410,7 +410,7 @@
   }
 
   /* TABS */
-  .tabs.s-8yXO12Wbi8z8 {
+  .tabs {
     display: flex;
     gap: 30px;
     border-bottom: 1px solid #ddd;

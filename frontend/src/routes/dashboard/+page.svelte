@@ -125,33 +125,22 @@
 
     <h2>Submit Proxy Memo</h2>
 
-    <!-- {#if user}
-      <p class="auth-sub">
-        Filing as <strong>{user.org_name}</strong>
-      </p>
-
-      <div class="info-box">
-        <p><strong>Company:</strong> {user.org_name}</p>
-        <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>CIK:</strong> {user.cik}</p>
-      </div>
-    {/if} -->
 
 
     {#if data.user}
-  <p style="color:red;">
+  <!-- <p style="color:red;">
     DEBUG: {data.user.org_name} | {data.user.cik}
   </p>
 
   <p class="auth-sub">
     Filing as <strong>{data.user.org_name}</strong>
-  </p>
+  </p> -->
 
-  <div class="info-box">
+  <!-- <div class="info-box">
     <p><strong>Company:</strong> {data.user.org_name}</p>
     <p><strong>Email:</strong> {data.user.email}</p>
     <p><strong>CIK:</strong> {data.user.cik}</p>
-  </div>
+  </div> -->
 
   <label>Company Name</label>
   <input value={data.user.org_name} readonly />

@@ -166,7 +166,7 @@
   <input value={data.user.cik} readonly />
     {/if}
 
-   <label>Company Name *</label>
+   <label>Company Name <span class="req">*</span></label>
    <input bind:value={memo_submitter} placeholder="Enter Company Name" />
     
     

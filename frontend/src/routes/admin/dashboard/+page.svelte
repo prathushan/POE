@@ -625,6 +625,7 @@ function applyFilter() {
     border-radius: 6px;
     color: #b91c1c;
     text-decoration: none;
+    margin:10px 0;
   }
 
   textarea {
@@ -694,14 +695,14 @@ function applyFilter() {
     display: grid;
     grid-template-columns: 180px 1fr;
     gap: 8px 20px;
-    font-size: 13px;
+    font-size: 14px !important;
   }
 
-  .grid div:first-child {
+  /* .grid div:first-child {
     color: #777;
     text-transform: uppercase;
     font-size: 11px;
-  }
+  } */
 
   .note-row {
     display: flex;

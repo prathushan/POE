@@ -463,7 +463,7 @@ const filteredFilings = $derived(
 
   /* VALUE */
   .value {
-    font-size: 13px;
+    font-size: 15px;
     color: #222;
   }
 

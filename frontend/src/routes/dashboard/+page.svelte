@@ -11,7 +11,7 @@
   // let description = "";
   let contact_name = "";
   let contact_cik = "";
- 
+ let memo_submitter = "";
 
   let file = null;
 
@@ -80,7 +80,7 @@
     formData.append("contact_name", contact_name);
     formData.append("file", file);
     formData.append("contact_cik", contact_cik);
-
+    formData.append("memo_submitter", memo_submitter);
     try {
       const res = await fetch("/api/filings/create", {
         method: "POST",
@@ -127,29 +127,9 @@
 
 
 
-    {#if data.user}
-  <!-- <p style="color:red;">
-    DEBUG: {data.user.org_name} | {data.user.cik}
-  </p>
+   
 
-  <p class="auth-sub">
-    Filing as <strong>{data.user.org_name}</strong>
-  </p> -->
-
-  <!-- <div class="info-box">
-    <p><strong>Company:</strong> {data.user.org_name}</p>
-    <p><strong>Email:</strong> {data.user.email}</p>
-    <p><strong>CIK:</strong> {data.user.cik}</p>
-  </div> -->
-
-  <label>Company Name</label>
-  <input value={data.user.org_name} readonly />
-
-  <label>Company CIK</label>
-  <input value={data.user.cik} readonly />
-{/if}
-
-    <label>Company Proxy Statement Link <span class="req">*</span></label>
+    <label>Company Proxy Statement Link (DEF14A)<span class="req">*</span></label>
     <input bind:value={def14a_link} placeholder="SEC filing link" />
 
     <label>Item Number</label>
@@ -164,34 +144,37 @@
 
     <!-- <label>Description</label>
     <textarea bind:value={description} placeholder="Optional details"></textarea> -->
+     {#if data.user}
+  <!-- <p style="color:red;">
+    DEBUG: {data.user.org_name} | {data.user.cik}
+  </p>
 
-    <!-- <label>Company Name <span class="req">*</span></label> -->
-    <!-- <input bind:value={filer_name} readonly /> -->
-    <!-- <input value={user?.org_name || ""} readonly /> -->
-    <!-- <input value={user?.org_name || ""} readonly /> -->
+  <p class="auth-sub">
+    Filing as <strong>{data.user.org_name}</strong>
+  </p> -->
 
-    <!-- <label>Company CIK Number <span class="req">*</span></label> -->
-    <!-- <input bind:value={cik} readonly /> -->
-    <!-- <input value={user?.cik || ""} readonly /> -->
-    <!-- <input value={user?.cik || ""} readonly /> -->
-<!-- {#key user}
-<label>Company Name</label>
-<input value={user?.org_name || ""} readonly />
- 
-  <label>Company CIK</label>
-<input value={user?.cik || ""} readonly />
-{/key} -->
+  <!-- <div class="info-box">
+    <p><strong>Company:</strong> {data.user.org_name}</p>
+    <p><strong>Email:</strong> {data.user.email}</p>
+    <p><strong>CIK:</strong> {data.user.cik}</p>
+  </div> -->
 
+  <label>Organization Name</label>
+  <input value={data.user.org_name} readonly />
 
+  <label>Organization CIK</label>
+  <input value={data.user.cik} readonly />
+    {/if}
+
+   <label>Company Name *</label>
+   <input bind:value={memo_submitter} placeholder="Enter Company Name" />
     
-    <!-- <p>{JSON.stringify(user)}</p>
-    <p style="color:red;">DEBUG: {user?.org_name} | {user?.cik}</p> -->
+    
 
     <label>Submission Contact Name</label>
     <input bind:value={contact_name} placeholder="Optional override" />
 
-    <!-- <label>Contact CIK</label>
-    <input bind:value={contact_cik} placeholder="Optional contact CIK" /> -->
+
 
     <label>Upload Proxy Memo PDF <span class="req">*</span></label>
     <input type="file" on:change={handleFile} />

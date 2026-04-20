@@ -289,27 +289,15 @@ function applyFilter() {
 
           <hr />
 
-          <!-- <div class="section">
-        <h4>FILING INFORMATION</h4>
 
-        <p><strong>Company:</strong> {selectedFiling.company_name}</p>
-        <p><strong>Registrant CIK:</strong> {selectedFiling.company_cik || '-'}</p>
-        <p><strong>DEF 14A:</strong> 
-          <a href={selectedFiling.def14a_link} target="_blank">
-            {selectedFiling.def14a_link}
-          </a>
-        </p>
-        <p><strong>Filer:</strong> {selectedFiling.filer_name}</p>
-        <p><strong>Contact:</strong> {selectedFiling.contact_name || '-'}</p>
-      </div> -->
           <div class="section">
             <h4>FILING INFORMATION</h4>
 
             <div class="grid">
-              <div>COMPANY</div>
+              <div>ORGANIZATION NAME</div>
               <div>{selectedFiling.company_name}</div>
 
-              <div>REGISTRANT CIK</div>
+              <div>ORGANIZATION CIK</div>
               <div>{selectedFiling.company_cik || "-"}</div>
 
               <div>DEF 14A FILING</div>
@@ -322,11 +310,11 @@ function applyFilter() {
               <div>PROPOSAL ITEM</div>
               <div>{selectedFiling.item_number || "-"}</div>
 
-              <div>FILER</div>
-              <div>{selectedFiling.filer_name}</div>
+              <div>COMPANY NAME</div>
+              <div>{selectedFiling.memo_submitter || "-"}</div>
 
-              <div>FILER CIK</div>
-              <div>{selectedFiling.filer_cik || "-"}</div>
+              <!-- <div>FILER CIK</div>
+              <div>{selectedFiling.filer_cik || "-"}</div> -->
 
               <div>CONTACT</div>
               <div>

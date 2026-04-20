@@ -47,6 +47,7 @@ export const GET = async () => {
         filer_name,
         filer_cik,
         contact_name,
+        memo_submitter,
         contact_email,
         def14a_link,
         item_number,

@@ -99,10 +99,10 @@
       </div>
     {/if}
 
-    <label>Company Name <span class="req">*</span></label>
+    <label>Organization Name <span class="req">*</span></label>
     <input bind:value={filer_name} placeholder="i.e., Organization or Shareholder Name/Entity" />
 
-    <label>Company CIK Number <span class="req">*</span></label>
+    <label>Organization CIK Number <span class="req">*</span></label>
     <input bind:value={cik} on:input={checkCIK} placeholder="10-digit Central Index Key" />
 
     <div class="helper-links">

@@ -130,29 +130,7 @@ const filteredFilings = $derived(
         </tr>
       </thead>
 
-      <!-- <tbody>
-        {#if filings.length === 0}
-          <tr>
-            <td colspan="5">No approved filings yet</td>
-          </tr>
-        {:else}
-          {#each getPaginated() as f}
-            <tr>
-              <td>{new Date(f.created_at).toLocaleDateString()}</td>
 
-              <td>
-                <span class="filing-type">
-                  {f.accession_number?.split("-")[0]}
-                </span>
-              </td>
-
-              <td>{f.company_name}</td>
-              <td>{f.filer_name}</td>
-              <td class="link">{f.accession_number}</td>
-            </tr>
-          {/each}
-        {/if}
-      </tbody> -->
       <tbody>
         {#if filings.length === 0}
           <tr>
@@ -218,10 +196,10 @@ const filteredFilings = $derived(
             <h4 class="section-title">FILING INFORMATION</h4>
 
             <div class="info-grid">
-              <div class="label">COMPANY</div>
+              <div class="label">ORGANIZATION NAME</div>
               <div class="value">{selectedFiling.company_name}</div>
 
-              <div class="label">REGISTRANT CIK</div>
+              <div class="label">ORGANIZATION CIK</div>
               <div class="value">{selectedFiling.company_cik || "-"}</div>
 
               <div class="label">DEF 14A FILING</div>
@@ -234,11 +212,11 @@ const filteredFilings = $derived(
               <div class="label">PROPOSAL ITEM</div>
               <div class="value">{selectedFiling.item_number || "-"}</div>
 
-              <div class="label">FILER</div>
-              <div class="value">{selectedFiling.filer_name}</div>
+              <div class="label">COMPANY NAME</div>
+              <div class="value">{selectedFiling.memo_submitter}</div>
 
-              <div class="label">FILER CIK</div>
-              <div class="value">{selectedFiling.filer_cik || "-"}</div>
+              <!-- <div class="label">FILER CIK</div>
+              <div class="value">{selectedFiling.filer_cik || "-"}</div> -->
 
               <div class="label">CONTACT</div>
               <div class="value">

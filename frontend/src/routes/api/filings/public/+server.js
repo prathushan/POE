@@ -51,6 +51,9 @@ export const GET = async () => {
         item_number,
         contact_name,
         contact_email,
+
+        memo_submitter,
+
         pdf_s3_key,
         pdf_filename,
         subject,

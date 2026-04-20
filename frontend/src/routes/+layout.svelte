@@ -75,10 +75,10 @@
 <div class="submit-bar">
   <div class="container submit-bar-inner">
     <a href="/login">
-      <button class="btn-cta">Submit Exempt Solicitation →</button>
+      <button class="btn-cta">Submit Proxy Memo →</button>
     </a>
     <div class="submit-bar-text">
-      Publish your exempt solicitation to the public record.
+      Publish your Proxy Memo solicitation to the public record.
       <a href="/about">Why POE?</a>
     </div>
   </div>

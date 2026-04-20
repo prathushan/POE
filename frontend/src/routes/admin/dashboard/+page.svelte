@@ -280,7 +280,7 @@ function applyFilter() {
             <div class="status-tag">{selectedFiling.status}</div>
           </div>
           <h2 class="main-title">
-            Exempt Solicitation — {selectedFiling.subject}
+          Proxy Memo — {selectedFiling.subject}
           </h2>
 
           <p class="date">
@@ -291,7 +291,7 @@ function applyFilter() {
 
 
           <div class="section">
-            <h4>FILING INFORMATION</h4>
+            <h4>PROXY INFORMATION</h4>
 
             <div class="grid">
               <div>ORGANIZATION NAME</div>

@@ -125,7 +125,10 @@
 
     <h2>Submit Proxy Memo</h2>
 
-
+ <label>Company Name <span class="req">*</span></label>
+   <input bind:value={memo_submitter} placeholder="Enter Company Name" />
+    
+    
 
    
 
@@ -166,10 +169,7 @@
   <input value={data.user.cik} readonly />
     {/if}
 
-   <label>Company Name <span class="req">*</span></label>
-   <input bind:value={memo_submitter} placeholder="Enter Company Name" />
-    
-    
+  
 
     <label>Submission Contact Name</label>
     <input bind:value={contact_name} placeholder="Optional override" />

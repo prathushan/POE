@@ -103,7 +103,7 @@ const filteredFilings = $derived(
   <!-- LEFT TABLE -->
   <div>
     <div class="section-header">
-      <h3>Recent Exempt Solicitations</h3>
+      <h3>Recent Proxy Memos</h3>
     </div>
 
     <!-- ✅ SHOWING TEXT -->
@@ -181,7 +181,7 @@ const filteredFilings = $derived(
 
             <!-- TITLE -->
             <h2 class="modal-title">
-              Exempt Solicitation — {selectedFiling.subject}
+              Proxy Memo — {selectedFiling.subject}
             </h2>
 
             <!-- META -->
@@ -193,7 +193,7 @@ const filteredFilings = $derived(
             <hr />
 
             <!-- FILING INFO -->
-            <h4 class="section-title">FILING INFORMATION</h4>
+            <h4 class="section-title">PROXY INFORMATION</h4>
 
             <div class="info-grid">
               <div class="label">ORGANIZATION NAME</div>
@@ -480,6 +480,7 @@ const filteredFilings = $derived(
     border-radius: 6px;
     display: inline-block;
     font-size: 13px;
+    margin: 10px 0;
   }
 
   /* DESCRIPTION */

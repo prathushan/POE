@@ -13,32 +13,86 @@
   }
 </script> -->
 <script>
+import { goto } from '$app/navigation';
   let email = $state('');
   let password = $state('');
   let message = $state('');
 
-  async function login() {
+  // async function login() {
+  //   const res = await fetch('/api/auth/login', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ email, password })
+  //   });
+
+  //   const data = await res.json();
+
+  //   if (data.success) {
+  //     // ✅ store FULL user
+  //     localStorage.setItem('user', JSON.stringify(data.user));
+
+  //     message = 'Login successful! Redirecting...';
+
+  //     setTimeout(() => {
+  //       window.location.href = '/dashboard';
+  //     }, 1000);
+  //   } else {
+  //     message = data.message;
+  //   }
+  // }
+
+
+async function login() {
+
+  if (!email || !password) {
+
+    message = "Please enter email and password";
+
+    return;
+
+  }
+ 
+  try {
+
     const res = await fetch('/api/auth/login', {
+
       method: 'POST',
+
       headers: { 'Content-Type': 'application/json' },
+
+      credentials: 'include',
+
       body: JSON.stringify({ email, password })
+
     });
-
+ 
     const data = await res.json();
-
-    if (data.success) {
-      // ✅ store FULL user
-      localStorage.setItem('user', JSON.stringify(data.user));
+ 
+    if (res.ok && data.success) {
 
       message = 'Login successful! Redirecting...';
+ 
+      // 🔥 THIS LINE FIXES YOUR ISSUE
 
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1000);
+      window.location.href = '/dashboard';
+ 
     } else {
-      message = data.message;
+
+      message = data.message || "Login failed";
+
     }
+ 
+  } catch (err) {
+
+    console.error(err);
+
+    message = "Something went wrong";
+
   }
+
+}
+ 
+ 
 </script>
 
 <svelte:head>

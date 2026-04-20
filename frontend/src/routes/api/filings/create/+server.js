@@ -178,8 +178,10 @@ export const POST = async ({ request }) => {
     let user = {};
     try {
       user = JSON.parse(request.headers.get('x-user') || '{}');
+      console.log("USER HEADER:", request.headers.get('x-user'));
     } catch (e) {
       console.log('⚠️ USER PARSE ERROR');
+      
     }
 
     const safeUser = {

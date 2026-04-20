@@ -50,6 +50,9 @@
       // ✅ Save user
       localStorage.setItem('user', JSON.stringify({
         email,
+        cik,                      // ← store CIK
+        filer_name,               // ← store company name
+        contact_name,
         org_name: data.org_name
       }));
 
@@ -96,10 +99,10 @@
       </div>
     {/if}
 
-    <label>Filer Name <span class="req">*</span></label>
+    <label>Company Name <span class="req">*</span></label>
     <input bind:value={filer_name} placeholder="i.e., Organization or Shareholder Name/Entity" />
 
-    <label>Filer CIK Number <span class="req">*</span></label>
+    <label>Company CIK Number <span class="req">*</span></label>
     <input bind:value={cik} on:input={checkCIK} placeholder="10-digit Central Index Key" />
 
     <div class="helper-links">

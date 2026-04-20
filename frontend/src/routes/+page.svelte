@@ -264,8 +264,8 @@ const filteredFilings = $derived(
             <hr />
 
             <!-- DESCRIPTION -->
-            <h4 class="section-title">DESCRIPTION</h4>
-            <p class="desc">{selectedFiling.description}</p>
+            <!-- <h4 class="section-title">DESCRIPTION</h4>
+            <p class="desc">{selectedFiling.description}</p> -->
 
             <!-- DISCLAIMER -->
             <div class="disclaimer">

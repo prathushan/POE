@@ -22,24 +22,42 @@
     updateUI();
   });
 
-  function updateUI() {
-    stats = {
-      pending: filings.filter((f) => (f.status || "pending") === "pending")
-        .length,
-      approved: filings.filter((f) => f.status === "approved").length,
-      rejected: filings.filter((f) => f.status === "rejected").length,
-      total: filings.length,
-    };
-    applyFilter();
-  }
+  // function updateUI() {
+  //   stats = {
+  //     pending: filings.filter((f) => (f.status || "pending") === "pending")
+  //       .length,
+  //     approved: filings.filter((f) => f.status === "approved").length,
+  //     rejected: filings.filter((f) => f.status === "rejected").length,
+  //     total: filings.length,
+  //   };
+  //   applyFilter();
+  // }
+function updateUI() {
+  const visible = filings.filter((f) => f.status !== "deleted");
 
-  function applyFilter() {
-    filtered =
-      activeTab === "all"
-        ? [...filings]
-        : filings.filter((f) => (f.status || "pending") === activeTab);
-  }
+  stats = {
+    pending: visible.filter((f) => (f.status || "pending") === "pending").length,
+    approved: visible.filter((f) => f.status === "approved").length,
+    rejected: visible.filter((f) => f.status === "rejected").length,
+    total: visible.length,
+  };
 
+  applyFilter();
+}
+  // function applyFilter() {
+  //   filtered =
+  //     activeTab === "all"
+  //       ? [...filings]
+  //       : filings.filter((f) => (f.status || "pending") === activeTab);
+  // }
+function applyFilter() {
+  const visible = filings.filter((f) => f.status !== "deleted");
+
+  filtered =
+    activeTab === "all"
+      ? [...visible]
+      : visible.filter((f) => (f.status || "pending") === activeTab);
+}
   function setTab(tab) {
     activeTab = tab;
     applyFilter();
@@ -59,7 +77,27 @@
     selectedFiling = null;
     adminNote = "";
   }
+  async function deleteFiling(id) {
+  const confirmDelete = confirm("Are you sure?");
+  if (!confirmDelete) return;
 
+  // just update status (NOT delete API)
+  await fetch("/api/admin/update-status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id,
+      status: "deleted",
+    }),
+  });
+
+  // update UI
+  filings = filings.map((f) =>
+    f.id === id ? { ...f, status: "deleted" } : f
+  );
+
+  updateUI();
+}
   async function updateStatus(id, status) {
     await fetch("/api/admin/update-status", {
       method: "POST",
@@ -91,6 +129,7 @@
     closeModal();
   }
 </script>
+
 <svelte:head>
   <title>POE | Admin Dashboard</title>
 </svelte:head>
@@ -154,7 +193,7 @@
 
   <!-- TABLE -->
   <div class="table-wrap">
-   <table class="filing-table">
+    <table class="filing-table">
       <thead>
         <tr>
           <th>DATE</th>
@@ -312,10 +351,10 @@
 
           <hr />
 
-          <div class="section">
+          <!-- <div class="section">
             <h4>DESCRIPTION</h4>
             <p>{selectedFiling.description}</p>
-          </div>
+          </div> -->
 
           <hr />
 

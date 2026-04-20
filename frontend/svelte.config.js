@@ -1,43 +1,43 @@
 // For Local 
 
 
-import adapter from '@sveltejs/adapter-auto';
+// import adapter from '@sveltejs/adapter-auto';
 
-/** @type {import('@sveltejs/kit').Config} */
-const config = {
-	kit: {
-		adapter: adapter()
-	},
-	vitePlugin: {
-		dynamicCompileOptions: ({ filename }) =>
-			filename.includes('node_modules') ? undefined : { runes: true }
-	}
-};
+// /** @type {import('@sveltejs/kit').Config} */
+// const config = {
+// 	kit: {
+// 		adapter: adapter()
+// 	},
+// 	vitePlugin: {
+// 		dynamicCompileOptions: ({ filename }) =>
+// 			filename.includes('node_modules') ? undefined : { runes: true }
+// 	}
+// };
 
-export default config;
+// export default config;
 
 // For Aws Working 
 
-// export default config;
-// import adapter from '@sveltejs/adapter-node';
+export default config;
+import adapter from '@sveltejs/adapter-node';
  
-// /** @type {import('@sveltejs/kit').Config} */
-// const config = {
-//   kit: {
-//     adapter: adapter(),
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+  kit: {
+    adapter: adapter(),
  
-//     // 🔥 ADD THIS
-//     csrf: {
-//       checkOrigin: false
-//     }
-//   },
+    // 🔥 ADD THIS
+    csrf: {
+      checkOrigin: false
+    }
+  },
  
-//   vitePlugin: {
-//     dynamicCompileOptions: ({ filename }) =>
-//       filename.includes('node_modules')
-//         ? undefined
-//         : { runes: true }
-//   }
-// };
+  vitePlugin: {
+    dynamicCompileOptions: ({ filename }) =>
+      filename.includes('node_modules')
+        ? undefined
+        : { runes: true }
+  }
+};
  
-// export default config;
+export default config;

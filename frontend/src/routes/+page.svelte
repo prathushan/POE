@@ -52,19 +52,21 @@
   //     f.accession_number?.toLowerCase().includes(term)
   //   );
   // });
-const filteredFilings = $derived(
-  filings.filter((f) => {
-    const term = search.toLowerCase();
- 
-    return (
-      f.company_name?.toLowerCase().includes(term) ||
-      f.filer_name?.toLowerCase().includes(term) ||
-      f.company_cik?.includes(term) ||
-      f.filer_cik?.includes(term) ||
-      f.accession_number?.toLowerCase().includes(term)
-    );
-  })
-);
+  const filteredFilings = $derived(
+    filings.filter((f) => {
+      const term = search.toLowerCase();
+
+      return (
+        f.company_name?.toLowerCase().includes(term) ||
+        f.filer_name?.toLowerCase().includes(term) ||
+        f.company_cik?.includes(term) ||
+        f.filer_cik?.includes(term) ||
+        f.memo_submitter?.toLowerCase().includes(term) ||
+        f.created_at?.toLowerCase().includes(term) ||
+        f.accession_number?.toLowerCase().includes(term)
+      );
+    }),
+  );
   // ✅ reset page on search change
   // $: if (search !== prevSearch) {
   //   currentPage = 1;
@@ -72,9 +74,10 @@ const filteredFilings = $derived(
   // }
 
   $effect(() => {
-  currentPage = 1;
-});
+    currentPage = 1;
+  });
 </script>
+
 <svelte:head>
   <title>POE | Home</title>
 </svelte:head>
@@ -82,11 +85,8 @@ const filteredFilings = $derived(
 <!-- SEARCH HERO -->
 <div class="search-hero">
   <div class="container">
-    <h2>Search Exempt Solicitations</h2>
-    <p>
-      Browse shareholder exempt solicitations published on the Proxy Open
-      Exchange.
-    </p>
+    <h2>Search Proxy Memos</h2>
+    <p>Browse shareholder proxy memos published on the Proxy Open Exchange.</p>
 
     <div class="search-box">
       <input
@@ -115,7 +115,7 @@ const filteredFilings = $derived(
         –
         {Math.min(currentPage * pageSize, filings.length)}
         <!-- of {filings.length} filings -->
-       of {filteredFilings.length} filings 
+        of {filteredFilings.length} filings
       {/if}
     </p>
 
@@ -129,7 +129,6 @@ const filteredFilings = $derived(
           <th>Accession</th>
         </tr>
       </thead>
-
 
       <tbody>
         {#if filings.length === 0}
@@ -154,8 +153,9 @@ const filteredFilings = $derived(
               </td>
 
               <!-- FILER -->
+
               <td>
-                {f.filer_name}<br />
+                <strong>{f.memo_submitter}</strong><br />
                 <span class="sub">CIK: {f.filer_cik || "-"}</span>
               </td>
 
@@ -196,15 +196,25 @@ const filteredFilings = $derived(
             <h4 class="section-title">PROXY INFORMATION</h4>
 
             <div class="info-grid">
-              <div class="label">ORGANIZATION NAME</div>
-              <div class="value">{selectedFiling.company_name}</div>
+              <div class="label">COMPANY NAME</div>
+              <div class="value">{selectedFiling.memo_submitter}</div>
 
-              <div class="label">ORGANIZATION CIK</div>
-              <div class="value">{selectedFiling.company_cik || "-"}</div>
+              <!-- <div class="label">DEF 14A FILING</div>
+           <div class="value">
+                <a href={selectedFiling.def14a_link} target="_blank">
+                  {selectedFiling.def14a_link}
+                </a>
+              </div>    -->
 
               <div class="label">DEF 14A FILING</div>
               <div class="value">
-                <a href={selectedFiling.def14a_link} target="_blank">
+                <a
+                  href={selectedFiling.def14a_link?.startsWith("http")
+                    ? selectedFiling.def14a_link
+                    : "https://" + selectedFiling.def14a_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {selectedFiling.def14a_link}
                 </a>
               </div>
@@ -212,8 +222,11 @@ const filteredFilings = $derived(
               <div class="label">PROPOSAL ITEM</div>
               <div class="value">{selectedFiling.item_number || "-"}</div>
 
-              <div class="label">COMPANY NAME</div>
-              <div class="value">{selectedFiling.memo_submitter}</div>
+              <div class="label">ORGANIZATION NAME</div>
+              <div class="value">{selectedFiling.company_name}</div>
+
+              <div class="label">ORGANIZATION CIK</div>
+              <div class="value">{selectedFiling.company_cik || "-"}</div>
 
               <!-- <div class="label">FILER CIK</div>
               <div class="value">{selectedFiling.filer_cik || "-"}</div> -->
@@ -233,7 +246,11 @@ const filteredFilings = $derived(
             {#if selectedFiling.pdf_s3_key}
               <div class="file-box">
                 📄
-                <a href={"/" + selectedFiling.pdf_s3_key} target="_blank">
+                <a
+                  href={`/${selectedFiling.pdf_s3_key.replace("static/", "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {selectedFiling.pdf_filename}
                 </a>
               </div>
@@ -288,7 +305,7 @@ const filteredFilings = $derived(
             <div class="stat-number">{stats.total}</div>
             <div class="stat-label">Total</div>
           </div>
-<!--new sectio -->
+          <!--new section-->
           <div class="stat-item">
             <div class="stat-number">
               {[...new Set(filings.map((f) => f.company_name))].length}
@@ -321,7 +338,7 @@ const filteredFilings = $derived(
               target="_blank"
               rel="noopener noreferrer"
             >
-              → C&DI Q126.06 — SEC Rule Change
+              → SEC Rule Change
             </a>
           </li>
           <li>
@@ -340,7 +357,6 @@ const filteredFilings = $derived(
       </div>
     </div>
   </div>
- 
 </div>
 
 <style>

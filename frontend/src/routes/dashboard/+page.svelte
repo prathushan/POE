@@ -1,8 +1,7 @@
 <script>
-
   import { onMount } from "svelte";
- let { data } = $props(); // ✅ Svelte 5 way
-  let user = $state(data.user); // ✅ reactive state 
+  let { data } = $props(); // ✅ Svelte 5 way
+  let user = $state(data.user); // ✅ reactive state
   //let user = null;
 
   let def14a_link = "";
@@ -11,26 +10,13 @@
   // let description = "";
   let contact_name = "";
   let contact_cik = "";
- let memo_submitter = "";
+  let memo_submitter = "";
 
   let file = null;
 
   // ✅ NEW (safe)
   let legal_agree = false;
   let terms_agree = false;
-
-   //   let companyName = "";
-  // let companyCik = "";
-
-  // onMount(() => {
-  //   const stored = localStorage.getItem("user");
-  //   if (stored) {
-  //     user = JSON.parse(stored);
-  //     console.log("USER:", user); // debug
-  //     filer_name = user.org_name;
-  //     cik = user.cik;
-  //   }
-  // });
 
   onMount(async () => {
     const stored = localStorage.getItem("user");
@@ -58,6 +44,11 @@
     if (!def14a_link || !subject || !file) {
       alert("Required fields missing");
       return;
+    }
+ 
+    // ✅ NEW CHECK for db save  (important)
+   if (def14a_link&&!def14a_link.startsWith("http")) {
+      def14a_link="https://"+def14a_link;
     }
 
     // ✅ NEW CHECK (important)
@@ -96,7 +87,8 @@
         alert(
           "Proxy memo submitted successfully. An Admin will review the submission.",
         );
-
+         // 🔁 Refresh page after OK click
+  window.location.reload();
         def14a_link = "";
         item_number = "";
         subject = "";
@@ -125,14 +117,12 @@
 
     <h2>Submit Proxy Memo</h2>
 
- <label>Company Name <span class="req">*</span></label>
-   <input bind:value={memo_submitter} placeholder="Enter Company Name" />
-    
-    
+    <label>Company Name <span class="req">*</span></label>
+    <input bind:value={memo_submitter} placeholder="Enter Company Name" />
 
-   
-
-    <label>Company Proxy Statement Link (DEF14A)<span class="req">*</span></label>
+    <label
+      >Company Proxy Statement Link (DEF14A)<span class="req">*</span></label
+    >
     <input bind:value={def14a_link} placeholder="SEC filing link" />
 
     <label>Item Number</label>
@@ -141,40 +131,20 @@
     <label>Proposal Topic <span class="req">*</span></label>
     <input
       bind:value={subject}
-      placeholder="circular economy, climate change, social justice…
-"
-    />
+      placeholder="circular economy, climate change, social justice… "/>
 
     <!-- <label>Description</label>
     <textarea bind:value={description} placeholder="Optional details"></textarea> -->
-     {#if data.user}
-  <!-- <p style="color:red;">
-    DEBUG: {data.user.org_name} | {data.user.cik}
-  </p>
+    {#if data.user}
+      <label>Organization Name</label>
+      <input value={data.user.org_name} readonly />
 
-  <p class="auth-sub">
-    Filing as <strong>{data.user.org_name}</strong>
-  </p> -->
-
-  <!-- <div class="info-box">
-    <p><strong>Company:</strong> {data.user.org_name}</p>
-    <p><strong>Email:</strong> {data.user.email}</p>
-    <p><strong>CIK:</strong> {data.user.cik}</p>
-  </div> -->
-
-  <label>Organization Name</label>
-  <input value={data.user.org_name} readonly />
-
-  <label>Organization CIK</label>
-  <input value={data.user.cik} readonly />
+      <label>Organization CIK</label>
+      <input value={data.user.cik} readonly />
     {/if}
-
-  
 
     <label>Submission Contact Name</label>
     <input bind:value={contact_name} placeholder="Optional override" />
-
-
 
     <label>Upload Proxy Memo PDF <span class="req">*</span></label>
     <input type="file" on:change={handleFile} />
@@ -192,15 +162,11 @@
       <label class="checkbox-row">
         <input type="checkbox" bind:checked={terms_agree} />
         <span>
-          I certify the information is accurate and acknowledge the Terms of
-          Use.
+          I certify the information is accurate and acknowledge the
+          <a href="/terms" class="terms-link">Terms of Use</a>.
         </span>
       </label>
     </div>
-
-    <!-- <button class="btn-auth" on:click={submitFiling}>
-      Submit Proxy Memo
-    </button> -->
 
     <button class="btn-auth" on:click={submitFiling}>
       Submit Proxy Memo

@@ -25,7 +25,7 @@ body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-heigh
 /* HEADER */
 header{background:var(--blue);border-bottom:4px solid var(--gold);}
 .header-main{display:flex;align-items:center;justify-content:space-between;padding:20px 0;}
-.logo-group{display:flex;align-items:center;gap:20px;cursor:pointer;}
+/* .logo-group{display:flex;align-items:center;gap:20px;cursor:pointer;} */
 .logo-seal{width:64px;height:64px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:26px;color:var(--blue);font-weight:700;box-shadow:0 0 0 3px var(--blue),0 0 0 5px var(--gold);flex-shrink:0;}
 .logo-text h1{font-family:var(--serif);font-size:28px;color:#fff;line-height:1.1;}
 .logo-text p{font-family:var(--mono);font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:.15em;margin-top:2px;}
@@ -572,4 +572,34 @@ footer ul a:hover{color:var(--gold);}
     margin-top: 2px;
     color: var(--g4);
   }
+}
+
+
+.terms-link {
+  /* color: #007bff; blue */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.terms-link:hover {
+  text-decoration: underline;
+  color: #0056b3; /* darker blue on hover */
+}
+
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  cursor: pointer;
+  text-decoration: none;   /* removes underline */
+  color: inherit;          /* keeps original colors */
+}
+
+/* extra safety (some browsers/styles target child elements) */
+.logo-group * {
+  text-decoration: none;
+}
+.logo-group:hover {
+  opacity: 0.85;
 }

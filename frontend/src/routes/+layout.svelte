@@ -47,13 +47,13 @@
 <!-- HEADER -->
 <header>
   <div class="container header-main">
-    <div class="logo-group">
+    <a href="/" class="logo-group">
       <div class="logo-seal">POE</div>
       <div class="logo-text">
         <h1>Proxy Open Exchange</h1>
         <p>Shareholder Proxy Memo Publishing Platform</p>
       </div>
-    </div>
+    </a>
 
     <nav class="header-nav">
       <a href="/">Home</a>

@@ -218,7 +218,7 @@ function applyFilter() {
             </td>
 
             <td>
-              {f.filer_name}<br />
+              <strong>{f.memo_submitter}</strong><br />
               <span class="sub">CIK: {f.filer_cik || "-"}</span>
             </td>
 
@@ -294,11 +294,9 @@ function applyFilter() {
             <h4>PROXY INFORMATION</h4>
 
             <div class="grid">
-              <div>ORGANIZATION NAME</div>
-              <div>{selectedFiling.company_name}</div>
 
-              <div>ORGANIZATION CIK</div>
-              <div>{selectedFiling.company_cik || "-"}</div>
+              <div>COMPANY NAME</div>
+              <div>{selectedFiling.memo_submitter || "-"}</div>
 
               <div>DEF 14A FILING</div>
               <div>
@@ -307,11 +305,14 @@ function applyFilter() {
                 </a>
               </div>
 
-              <div>PROPOSAL ITEM</div>
+               <div>PROPOSAL ITEM</div>
               <div>{selectedFiling.item_number || "-"}</div>
 
-              <div>COMPANY NAME</div>
-              <div>{selectedFiling.memo_submitter || "-"}</div>
+              <div>ORGANIZATION NAME</div>
+              <div>{selectedFiling.company_name}</div>
+
+              <div>ORGANIZATION CIK</div>
+              <div>{selectedFiling.company_cik || "-"}</div>
 
               <!-- <div>FILER CIK</div>
               <div>{selectedFiling.filer_cik || "-"}</div> -->

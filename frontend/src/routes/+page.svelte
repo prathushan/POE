@@ -124,7 +124,7 @@
         <tr>
           <th>Posted</th>
           <th>Form</th>
-          <th>Registrant</th>
+          <th>Filer</th>
           <th>Company</th>
           <th>Accession</th>
         </tr>
@@ -149,14 +149,14 @@
               <!-- REGISTRANT -->
               <td>
                 <strong>{f.company_name}</strong><br />
-                <span class="sub">CIK: {f.company_cik || "-"}</span>
+                <!-- <span class="sub">CIK: {f.company_cik || "-"}</span> -->
               </td>
 
               <!-- FILER -->
 
               <td>
                 <strong>{f.memo_submitter}</strong><br />
-                <span class="sub">CIK: {f.filer_cik || "-"}</span>
+                <!-- <span class="sub">CIK: {f.filer_cik || "-"}</span> -->
               </td>
 
               <!-- ACCESSION -->

@@ -121,7 +121,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              C&DI Q126.06 — SEC Rule Change
+               SEC Rule Change
             </a>
           </li>
 

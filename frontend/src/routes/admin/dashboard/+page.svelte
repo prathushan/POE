@@ -198,8 +198,8 @@ function applyFilter() {
         <tr>
           <th>DATE</th>
           <th>ACCESSION</th>
-          <th>REGISTRANT</th>
           <th>FILER</th>
+          <th>Company
           <th>STATUS</th>
           <th>ACTIONS</th>
         </tr>

@@ -104,7 +104,7 @@ async function login() {
     <div class="auth-logo">POE</div>
 
     <h2>Sign In</h2>
-    <p class="auth-sub">Sign in to submit exempt solicitations.</p>
+    <p class="auth-sub">Sign in to submit Proxy Memo</p>
 
     <label>Email</label>
     <input bind:value={email} placeholder="your@organization.org" />

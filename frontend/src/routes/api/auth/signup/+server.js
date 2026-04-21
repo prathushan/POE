@@ -32,17 +32,73 @@ export const POST = async ({ request }) => {
   }
 
   // 🔍 CHECK EXISTING USER
-  const existingResult = await pool.query(
-    'SELECT * FROM users WHERE email = $1 OR cik = $2',
-    [email, formattedCIK]
+  // const existingResult = await pool.query(
+  //   'SELECT * FROM users WHERE email = $1 OR cik = $2',
+  //   [email, formattedCIK]
+  // );
+
+//   const existing = await pool.query(
+//   "SELECT * FROM users WHERE email = $1",
+//   [email]
+// );
+ 
+// if (existing.rows.length > 0) {
+//   return json({ message: "Email already registered. Please sign in." }, { status: 400 });
+// }
+
+//   if (existingResult.rows.length > 0) {
+//     return json(
+//       { message: 'Matched record already exists. Please sign in instead.' },
+//       { status: 400 }
+//     );
+//   }
+
+// 🔍 CHECK EXISTING USER (ONLY EMAIL)
+
+const existing = await pool.query(
+
+  "SELECT * FROM users WHERE email = $1",
+
+  [email]
+
+);
+ 
+if (existing.rows.length > 0) {
+
+  return json(
+
+    { message: "Email already registered. Please sign in." },
+
+    { status: 400 }
+
   );
 
-  if (existingResult.rows.length > 0) {
-    return json(
-      { message: 'Matched record already exists. Please sign in instead.' },
-      { status: 400 }
-    );
-  }
+}
+ 
+// 🔥 LIMIT USERS PER CIK (MAX 5)
+
+const count = await pool.query(
+
+  "SELECT COUNT(*) FROM users WHERE cik = $1",
+
+  [formattedCIK]
+
+);
+ 
+if (parseInt(count.rows[0].count) >= 5) {
+
+  return json(
+
+    { message: "Maximum 5 members allowed per organization" },
+
+    { status: 400 }
+
+  );
+
+}
+ 
+
+
 
   // 🔍 CIK lookup
   const cikResult = await pool.query(

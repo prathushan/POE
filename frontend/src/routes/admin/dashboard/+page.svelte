@@ -12,6 +12,8 @@
     total: 0,
   });
 
+  
+
   onMount(async () => {
     const admin = localStorage.getItem("admin");
     if (!admin) window.location.href = "/admin/login";
@@ -22,42 +24,28 @@
     updateUI();
   });
 
-  // function updateUI() {
-  //   stats = {
-  //     pending: filings.filter((f) => (f.status || "pending") === "pending")
-  //       .length,
-  //     approved: filings.filter((f) => f.status === "approved").length,
-  //     rejected: filings.filter((f) => f.status === "rejected").length,
-  //     total: filings.length,
-  //   };
-  //   applyFilter();
-  // }
-function updateUI() {
-  const visible = filings.filter((f) => f.status !== "deleted");
+  function updateUI() {
+    const visible = filings.filter((f) => f.status !== "deleted");
 
-  stats = {
-    pending: visible.filter((f) => (f.status || "pending") === "pending").length,
-    approved: visible.filter((f) => f.status === "approved").length,
-    rejected: visible.filter((f) => f.status === "rejected").length,
-    total: visible.length,
-  };
+    stats = {
+      pending: visible.filter((f) => (f.status || "pending") === "pending")
+        .length,
+      approved: visible.filter((f) => f.status === "approved").length,
+      rejected: visible.filter((f) => f.status === "rejected").length,
+      total: visible.length,
+    };
 
-  applyFilter();
-}
-  // function applyFilter() {
-  //   filtered =
-  //     activeTab === "all"
-  //       ? [...filings]
-  //       : filings.filter((f) => (f.status || "pending") === activeTab);
-  // }
-function applyFilter() {
-  const visible = filings.filter((f) => f.status !== "deleted");
+    applyFilter();
+  }
 
-  filtered =
-    activeTab === "all"
-      ? [...visible]
-      : visible.filter((f) => (f.status || "pending") === activeTab);
-}
+  function applyFilter() {
+    const visible = filings.filter((f) => f.status !== "deleted");
+
+    filtered =
+      activeTab === "all"
+        ? [...visible]
+        : visible.filter((f) => (f.status || "pending") === activeTab);
+  }
   function setTab(tab) {
     activeTab = tab;
     applyFilter();
@@ -78,26 +66,26 @@ function applyFilter() {
     adminNote = "";
   }
   async function deleteFiling(id) {
-  const confirmDelete = confirm("Are you sure?");
-  if (!confirmDelete) return;
+    const confirmDelete = confirm("Are you sure?");
+    if (!confirmDelete) return;
 
-  // just update status (NOT delete API)
-  await fetch("/api/admin/update-status", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id,
-      status: "deleted",
-    }),
-  });
+    // just update status (NOT delete API)
+    await fetch("/api/admin/update-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        status: "deleted",
+      }),
+    });
 
-  // update UI
-  filings = filings.map((f) =>
-    f.id === id ? { ...f, status: "deleted" } : f
-  );
+    // update UI
+    filings = filings.map((f) =>
+      f.id === id ? { ...f, status: "deleted" } : f,
+    );
 
-  updateUI();
-}
+    updateUI();
+  }
   async function updateStatus(id, status) {
     await fetch("/api/admin/update-status", {
       method: "POST",
@@ -135,6 +123,7 @@ function applyFilter() {
 </svelte:head>
 
 <div class="container">
+  <div class="header"></div>
   <h2 class="title">Filing Administration</h2>
 
   <!-- STATS -->
@@ -189,6 +178,12 @@ function applyFilter() {
     <div class:active={activeTab === "all"} on:click={() => setTab("all")}>
       ALL
     </div>
+    <button
+      class="admin-submit-btn"
+      on:click={() => (window.location.href = "/admin/submit")}
+    >
+      + Submit Proxy Memo
+    </button>
   </div>
 
   <!-- TABLE -->
@@ -199,8 +194,7 @@ function applyFilter() {
           <th>DATE</th>
           <th>ACCESSION</th>
           <th>FILER</th>
-          <th>Company
-          <th>STATUS</th>
+          <th>Company </th><th>STATUS</th>
           <th>ACTIONS</th>
         </tr>
       </thead>
@@ -280,7 +274,7 @@ function applyFilter() {
             <div class="status-tag">{selectedFiling.status}</div>
           </div>
           <h2 class="main-title">
-          Proxy Memo — {selectedFiling.subject}
+            Proxy Memo — {selectedFiling.subject}
           </h2>
 
           <p class="date">
@@ -289,12 +283,10 @@ function applyFilter() {
 
           <hr />
 
-
           <div class="section">
             <h4>PROXY INFORMATION</h4>
 
             <div class="grid">
-
               <div>COMPANY NAME</div>
               <div>{selectedFiling.memo_submitter || "-"}</div>
 
@@ -305,7 +297,7 @@ function applyFilter() {
                 </a>
               </div>
 
-               <div>PROPOSAL ITEM</div>
+              <div>PROPOSAL ITEM</div>
               <div>{selectedFiling.item_number || "-"}</div>
 
               <div>ORGANIZATION NAME</div>
@@ -626,7 +618,7 @@ function applyFilter() {
     border-radius: 6px;
     color: #b91c1c;
     text-decoration: none;
-    margin:10px 0;
+    margin: 10px 0;
   }
 
   textarea {
@@ -731,4 +723,18 @@ function applyFilter() {
   .add-btn:hover {
     background: #16324a;
   }
+
+
+  .admin-submit-btn {
+    margin-left: auto;
+    background: #1a3a5c;
+    color: white;
+    padding: 16px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+
 </style>

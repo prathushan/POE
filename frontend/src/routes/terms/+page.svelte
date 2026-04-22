@@ -27,7 +27,7 @@
   <section>
     <h2>3. User Accounts and Verification</h2>
     <p>
-      To submit filings, users must create an account verified through their organization's CIK and a matching organizational email domain.
+      To submit a proxy memo, users must create an account verified through their organization's CIK and a matching organizational email domain.
     </p>
     <ul>
       <li>You are authorized to act on behalf of the organization you register</li>
@@ -37,10 +37,10 @@
   </section>
 
   <section>
-    <h2>4. Filing Submissions</h2>
-    <p>By submitting a filing to POE, you represent and warrant that:</p>
+    <h2>4. Submitting Proxy Memos</h2>
+    <p>By submitting a proxy memo to POE, you represent and warrant that:</p>
     <ul>
-      <li>You have the authority to submit materials on behalf of the named filing entity</li>
+      <li>You have the authority to submit materials on behalf of the named proponent</li>
       <li>The submitted materials are accurate and comply with applicable securities laws</li>
       <li>
         You grant POE a non-exclusive, royalty-free license to publish and distribute materials under 

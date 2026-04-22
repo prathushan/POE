@@ -86,7 +86,7 @@
 <div class="search-hero">
   <div class="container">
     <h2>Search Proxy Memos</h2>
-    <p>Browse shareholder proxy memos published on the Proxy Open Exchange.</p>
+    <!-- <p>Browse shareholder proxy memos published on the Proxy Open Exchange.</p> -->
 
     <div class="search-box">
       <input
@@ -123,10 +123,10 @@
       <thead>
         <tr>
           <th>Posted</th>
-          <th>Form</th>
-          <th>Filer</th>
+          <!-- <th>Form</th> -->
+          <th>Submitted By</th>
           <th>Company</th>
-          <th>Accession</th>
+          <th>Proposal Topic</th>
         </tr>
       </thead>
 
@@ -142,9 +142,9 @@
               <td>{new Date(f.created_at).toLocaleDateString()}</td>
 
               <!-- FORM (STATIC) -->
-              <td>
+              <!-- <td>
                 <span class="filing-type">PX14A6G</span>
-              </td>
+              </td> -->
 
               <!-- REGISTRANT -->
               <td>
@@ -160,7 +160,7 @@
               </td>
 
               <!-- ACCESSION -->
-              <td class="link">{f.accession_number}</td>
+              <td class="link">{f.subject}</td>
             </tr>
           {/each}
         {/if}

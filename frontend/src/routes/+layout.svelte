@@ -78,7 +78,7 @@
       <button class="btn-cta">Submit Proxy Memo →</button>
     </a>
     <div class="submit-bar-text">
-      Publish your Proxy Memo solicitation to the public record.
+      Publish your Proxy Memo to the public record.
       <a href="/about">Why POE?</a>
     </div>
   </div>

@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
 
+  let editMode = $state(false);
   let filings = $state([]);
   let filtered = $state([]);
   let activeTab = $state("pending");
@@ -11,8 +12,6 @@
     rejected: 0,
     total: 0,
   });
-
-  
 
   onMount(async () => {
     const admin = localStorage.getItem("admin");
@@ -116,6 +115,35 @@
     updateUI();
     closeModal();
   }
+
+
+  async function saveEdit() {
+  const res = await fetch("/api/admin/update-filing", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(selectedFiling)
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    alert("Updated successfully");
+
+    filings = filings.map(f =>
+      f.id === selectedFiling.id ? selectedFiling : f
+    );
+
+    editMode = false;
+
+    updateUI();
+  } else {
+    alert(data.message || "Update failed");
+  }
+}
+
+
 </script>
 
 <svelte:head>
@@ -259,7 +287,7 @@
       <div class="modal">
         <!-- HEADER -->
         <div class="modal-header">
-          <h3>Review: {selectedFiling.accession_number}</h3>
+          <!-- <h3>Review: {selectedFiling.accession_number}</h3> -->
           <button on:click={closeModal}>×</button>
         </div>
 
@@ -267,9 +295,9 @@
         <div class="modal-body">
           <!-- <div class="status-tag">{selectedFiling.status}</div> -->
           <div class="status-row">
-            <div class="tag">
+            <!-- <div class="tag">
               {selectedFiling?.accession_number?.split("-")[0]}
-            </div>
+            </div> -->
 
             <div class="status-tag">{selectedFiling.status}</div>
           </div>
@@ -281,39 +309,76 @@
             Filed {new Date(selectedFiling.created_at).toLocaleDateString()}
           </p>
 
-          <hr />
+          <!-- <hr /> -->
 
           <div class="section">
             <h4>PROXY INFORMATION</h4>
 
             <div class="grid">
               <div>COMPANY NAME</div>
-              <div>{selectedFiling.memo_submitter || "-"}</div>
+              <!-- <div>{selectedFiling.memo_submitter || "-"}</div> -->
+              {#if editMode}
+                <input bind:value={selectedFiling.memo_submitter} />
+              {:else}
+                <div>{selectedFiling.memo_submitter || "-"}</div>
+              {/if}
 
               <div>DEF 14A FILING</div>
-              <div>
+              <!-- <div>
                 <a href={selectedFiling.def14a_link} target="_blank">
                   {selectedFiling.def14a_link}
                 </a>
-              </div>
+              </div> -->
+              {#if editMode}
+                <input bind:value={selectedFiling.def14a_link} />
+              {:else}
+                <div>
+                  <a href={selectedFiling.def14a_link} target="_blank">
+                    {selectedFiling.def14a_link}
+                  </a>
+                </div>
+              {/if}
 
               <div>PROPOSAL ITEM</div>
-              <div>{selectedFiling.item_number || "-"}</div>
+              <!-- <div>{selectedFiling.item_number || "-"}</div> -->
+              {#if editMode}
+                <input bind:value={selectedFiling.item_number} />
+              {:else}
+                <div>{selectedFiling.item_number || "-"}</div>
+              {/if}
 
               <div>ORGANIZATION NAME</div>
-              <div>{selectedFiling.company_name}</div>
+              <!-- <div>{selectedFiling.company_name}</div> -->
+              {#if editMode}
+                <input bind:value={selectedFiling.company_name} />
+              {:else}
+                <div>{selectedFiling.company_name}</div>
+              {/if}
 
               <div>ORGANIZATION CIK</div>
-              <div>{selectedFiling.company_cik || "-"}</div>
+              <!-- <div>{selectedFiling.company_cik || "-"}</div> -->
+              {#if editMode}
+                <input bind:value={selectedFiling.company_cik} />
+              {:else}
+                <div>{selectedFiling.company_cik || "-"}</div>
+              {/if}
 
               <!-- <div>FILER CIK</div>
               <div>{selectedFiling.filer_cik || "-"}</div> -->
 
               <div>CONTACT</div>
-              <div>
+              <!-- <div>
                 {selectedFiling.contact_name || "-"} · {selectedFiling.contact_email ||
                   "-"}
-              </div>
+              </div> -->
+              {#if editMode}
+                <input bind:value={selectedFiling.contact_name} />
+              {:else}
+                <div>
+                  {selectedFiling.contact_name || "-"} ·
+                  {selectedFiling.contact_email || "-"}
+                </div>
+              {/if}
             </div>
           </div>
           <hr />
@@ -352,6 +417,17 @@
 
         <!-- FOOTER -->
         <div class="modal-footer">
+          <button class="edit" on:click={() => (editMode = !editMode)}>
+            {editMode ? "CANCEL" : "EDIT"}
+          </button>
+          
+          {#if editMode}
+          <button class="save" on:click={saveEdit}>
+          SAVE CHANGES
+           </button>
+          {/if}
+
+
           <button
             class="approve"
             on:click={() => updateStatus(selectedFiling.id, "approved")}
@@ -538,6 +614,7 @@
     color: red;
     background-color: #fde8e4;
   }
+
   .delete {
     border: 1px solid #ccc;
   }
@@ -567,7 +644,7 @@
     color: white;
     padding: 15px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
   }
 
   .modal-body {
@@ -598,6 +675,11 @@
     gap: 10px;
   }
 
+  .status-row {
+    display: flex !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+  }
   .status-tag {
     background: #fef3c7;
     color: #92400e;
@@ -658,6 +740,36 @@
   .modal-footer .reject:hover {
     background: #fbd5d5;
   }
+
+  .modal-footer .edit {
+    background: #e8f0fe;
+    border: 1px solid #2b6cb0;
+    color: #2b6cb0;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .modal-footer .edit:hover {
+    background: #e8f0fe;
+  }
+
+    .modal-footer .save {
+    background: #fde8e4;
+    border: 1px solid #c53030;
+    color: #c53030;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .modal-footer .save:hover {
+    background: #fbd5d5;
+  }
+
+
 
   .status-row {
     display: flex;
@@ -724,7 +836,6 @@
     background: #16324a;
   }
 
-
   .admin-submit-btn {
     margin-left: auto;
     background: #1a3a5c;
@@ -735,6 +846,4 @@
     cursor: pointer;
     font-weight: 600;
   }
-
-
 </style>

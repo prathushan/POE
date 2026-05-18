@@ -59,7 +59,7 @@
 
   <p>
     For questions, contact:
-    <a href="#">info@proxyopen.org</a>
+    <a href="mailto:info@proxyopenexchange.org">info@proxyopenexchange.org</a>
   </p>
 
 </div>

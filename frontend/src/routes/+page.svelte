@@ -12,6 +12,9 @@
     pending: 0,
   });
 
+  let sortColumn = $state("");
+  let sortDirection = $state("asc");
+
   function openModal(filing) {
     selectedFiling = filing;
   }
@@ -41,19 +44,39 @@
     return Math.ceil(filteredFilings.length / pageSize) || 1;
   }
 
-  // $: filteredFilings = filings.filter((f) => {
-  //   const term = search.toLowerCase();
+  function getShareUrl() {
+    if (!selectedFiling) return "#";
 
-  //   return (
-  //     f.company_name?.toLowerCase().includes(term) ||
-  //     f.filer_name?.toLowerCase().includes(term) ||
-  //     f.company_cik?.includes(term) ||
-  //     f.filer_cik?.includes(term) ||
-  //     f.accession_number?.toLowerCase().includes(term)
-  //   );
-  // });
-  const filteredFilings = $derived(
-    filings.filter((f) => {
+    return `${window.location.origin}/filing/${selectedFiling.id}`;
+  }
+
+  function sortBy(column) {
+    if (sortColumn === column) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn = column;
+      sortDirection = "asc";
+    }
+  }
+
+  // const filteredFilings = $derived(
+  //   filings.filter((f) => {
+  //     const term = search.toLowerCase();
+
+  //     return (
+  //       f.company_name?.toLowerCase().includes(term) ||
+  //       f.filer_name?.toLowerCase().includes(term) ||
+  //       f.company_cik?.includes(term) ||
+  //       f.filer_cik?.includes(term) ||
+  //       f.memo_submitter?.toLowerCase().includes(term) ||
+  //       f.created_at?.toLowerCase().includes(term) ||
+  //       f.accession_number?.toLowerCase().includes(term)
+  //     );
+  //   }),
+  // );
+
+  const filteredFilings = $derived.by(() => {
+    let filtered = filings.filter((f) => {
       const term = search.toLowerCase();
 
       return (
@@ -65,13 +88,24 @@
         f.created_at?.toLowerCase().includes(term) ||
         f.accession_number?.toLowerCase().includes(term)
       );
-    }),
-  );
-  // ✅ reset page on search change
-  // $: if (search !== prevSearch) {
-  //   currentPage = 1;
-  //   prevSearch = search;
-  // }
+    });
+
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let valA = a[sortColumn] || "";
+        let valB = b[sortColumn] || "";
+
+        valA = valA.toString().toLowerCase();
+        valB = valB.toString().toLowerCase();
+
+        return sortDirection === "asc"
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      });
+    }
+
+    return filtered;
+  });
 
   $effect(() => {
     currentPage = 1;
@@ -120,16 +154,69 @@
     </p>
 
     <table class="filing-table">
+      <!-- <thead>
+        <tr>
+          <th>Company</th>
+         
+           <th>Form</th> 
+          <th>Submitted By</th>
+        
+          <th>Proposal Topic</th>
+           <th>Posted</th>
+        </tr>
+      </thead> -->
+
       <thead>
         <tr>
-          <th>Posted</th>
-          <!-- <th>Form</th> -->
-          <th>Submitted By</th>
-          <th>Company</th>
-          <th>Proposal Topic</th>
+          <th on:click={() => sortBy("memo_submitter")}>
+            Company
+            <!-- {#if sortColumn === 'memo_submitter'}
+        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
+      {/if} -->
+            {sortColumn === "memo_submitter"
+              ? sortDirection === "asc"
+                ? " ↑"
+                : " ↓"
+              : " ↕"}
+          </th>
+
+          <th on:click={() => sortBy("company_name")}>
+            Submitted By
+            <!-- {#if sortColumn === 'company_name'}
+        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
+      {/if} -->
+            {sortColumn === "company_name"
+              ? sortDirection === "asc"
+                ? " ↑"
+                : " ↓"
+              : " ↕"}
+          </th>
+
+          <th on:click={() => sortBy("subject")}>
+            Proposal Topic
+            <!-- {#if sortColumn === 'subject'}
+        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
+      {/if} -->
+            {sortColumn === "subject"
+              ? sortDirection === "asc"
+                ? " ↑"
+                : " ↓"
+              : " ↕"}
+          </th>
+
+          <th on:click={() => sortBy("created_at")}>
+            Posted
+            <!-- {#if sortColumn === 'created_at'}
+        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
+      {/if} -->
+            {sortColumn === "created_at"
+              ? sortDirection === "asc"
+                ? " ↑"
+                : " ↓"
+              : " ↕"}
+          </th>
         </tr>
       </thead>
-
       <tbody>
         {#if filings.length === 0}
           <tr>
@@ -138,8 +225,10 @@
         {:else}
           {#each getPaginated() as f}
             <tr class="clickable-row" on:click={() => openModal(f)}>
-              <!-- DATE -->
-              <td>{new Date(f.created_at).toLocaleDateString()}</td>
+              <td>
+                <strong>{f.memo_submitter}</strong><br />
+                <!-- <span class="sub">CIK: {f.filer_cik || "-"}</span> -->
+              </td>
 
               <!-- FORM (STATIC) -->
               <!-- <td>
@@ -154,13 +243,11 @@
 
               <!-- FILER -->
 
-              <td>
-                <strong>{f.memo_submitter}</strong><br />
-                <!-- <span class="sub">CIK: {f.filer_cik || "-"}</span> -->
-              </td>
-
               <!-- ACCESSION -->
               <td class="link">{f.subject}</td>
+
+              <!-- DATE -->
+              <td>{new Date(f.created_at).toLocaleDateString()}</td>
             </tr>
           {/each}
         {/if}
@@ -171,13 +258,13 @@
         <div class="modal" on:click|stopPropagation>
           <!-- HEADER -->
           <div class="modal-header">
-            <span>{selectedFiling.accession_number}</span>
+            <!-- <span>{selectedFiling.accession_number}</span> -->
             <button on:click={closeModal}>×</button>
           </div>
 
           <div class="modal-body">
             <!-- TAG -->
-            <span class="tag">PX14A6G</span>
+            <!-- <span class="tag">PX14A6G</span> -->
 
             <!-- TITLE -->
             <h2 class="modal-title">
@@ -186,8 +273,7 @@
 
             <!-- META -->
             <p class="meta">
-              Filed {new Date(selectedFiling.created_at).toLocaleDateString()} ·
-              {selectedFiling.accession_number}
+              Filed {new Date(selectedFiling.created_at).toLocaleDateString()}
             </p>
 
             <hr />
@@ -255,6 +341,50 @@
                 </a>
               </div>
             {/if}
+
+            <hr />
+
+            <div class="share-section">
+              <h4 class="section-title">SHARE THIS MEMO</h4>
+
+              <div class="share-buttons">
+                <button
+                  class="share-btn"
+                  on:click={async () => {
+                    const url = getShareUrl();
+
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      alert("Link copied!");
+                    } catch (err) {
+                      prompt("Copy this link:", url);
+                    }
+                  }}
+                >
+                  🔗 Copy Link
+                </button>
+
+                <a
+                  class="share-btn"
+                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(getShareUrl())}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Share on X
+                </a>
+
+                <a
+                  class="share-btn"
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                    getShareUrl(),
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Share on LinkedIn
+                </a>
+              </div>
+            </div>
 
             <hr />
 
@@ -416,7 +546,7 @@
     font-family: var(--mono);
     font-size: 13px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
   }
 
   /* BODY */
@@ -521,5 +651,36 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
+  }
+
+  th {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .share-section {
+    margin-top: 24px;
+  }
+
+  .share-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .share-btn {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: #1f3b5b;
+    font-weight: 600;
+  }
+
+  .share-btn:hover {
+    background: #f3f4f6;
   }
 </style>

@@ -13,7 +13,7 @@ export const POST = async ({ request }) => {
     contact_name
   } = await request.json();
 
-  if (!email || !password || !cik || !contact_name) {
+  if (!email || !password || !contact_name) {
     return json({ message: 'All required fields must be filled' }, { status: 400 });
   }
 

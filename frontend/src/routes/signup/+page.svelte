@@ -27,7 +27,7 @@
   }
 
   async function signup() {
-    if (!filer_name || !email || !password || !cik || !contact_name) {
+    if (!filer_name || !email || !password || !contact_name) {
       message = 'All fields are required';
       return;
     }
@@ -102,7 +102,7 @@
     <label>Organization Name <span class="req">*</span></label>
     <input bind:value={filer_name} placeholder="i.e., Organization or Shareholder Name/Entity" />
 
-    <label>Organization CIK Number <span class="req">*</span></label>
+    <label>Organization CIK Number </label>
     <input bind:value={cik} on:input={checkCIK} placeholder="10-digit Central Index Key" />
 
     <div class="helper-links">

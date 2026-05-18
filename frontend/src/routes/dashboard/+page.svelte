@@ -117,13 +117,15 @@
 
     <h2>Submit Proxy Memo</h2>
 
-    <label>Company Name <span class="req">*</span></label>
-    <input bind:value={memo_submitter} placeholder="Enter Company Name" />
-
-    <label
+     <label
       >Company Proxy Statement Link (DEF14A)<span class="req">*</span></label
     >
     <input bind:value={def14a_link} placeholder="SEC filing link" />
+    
+    <label>Company Name <span class="req">*</span></label>
+    <input bind:value={memo_submitter} placeholder="Enter Company Name" />
+
+   
 
     <label>Item Number</label>
     <input bind:value={item_number} placeholder="Optional item number" />
@@ -136,7 +138,7 @@
     <!-- <label>Description</label>
     <textarea bind:value={description} placeholder="Optional details"></textarea> -->
     {#if data.user}
-      <label>Organization Name</label>
+      <label>Proposal Submitted By</label>
       <input value={data.user.org_name} readonly />
 
       <label>Organization CIK</label>
@@ -154,8 +156,7 @@
       <label class="checkbox-row">
         <input type="checkbox" bind:checked={legal_agree} />
         <span>
-          Filer confirms they do not beneficially own more than $5 million of
-          the subject securities and are submitting voluntarily.
+          I understand that if I beneficially own securities with a value exceeding $5 million, or am otherwise subject to reporting obligations under applicable U.S. securities laws,  any submission or activity on this platform (POE) does not satisfy or replace any required filings with the U.S. Securities and Exchange Commission (“SEC”), and I agree that I remain solely responsible for complying with all such obligations.  
         </span>
       </label>
 

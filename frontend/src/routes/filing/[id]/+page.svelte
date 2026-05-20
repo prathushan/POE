@@ -4,7 +4,7 @@
   const filing = data.filing;
 </script>
 
-<svelte:head>
+<!-- <svelte:head>
   <title>{filing.subject}</title>
 
   <meta property="og:title" content={filing.subject} />
@@ -20,8 +20,36 @@
   />
 
   <meta property="og:type" content="website" />
-</svelte:head>
+</svelte:head> -->
+<svelte:head>
+  <title>{filing.subject}</title>
 
+  <meta property="og:title" content={filing.subject} />
+
+  <meta
+    property="og:description"
+    content={`Proxy memo submitted by ${filing.company_name}`}
+  />
+
+  <meta
+    property="og:url"
+    content={`https://proxyopenexchange.org/filing/${filing.id}`}
+  />
+
+  <!-- ADD THIS -->
+  <meta
+    property="og:image"
+    content="https://proxyopenexchange.org/poe-share-image.png"
+  />
+
+  <!-- OPTIONAL BUT RECOMMENDED -->
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta property="og:type" content="website" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+</svelte:head>
 <!-- <div class="filing-page">
   <h1>{filing.subject}</h1>
 

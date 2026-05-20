@@ -301,10 +301,22 @@
 
             <div class="status-tag">{selectedFiling.status}</div>
           </div>
-          <h2 class="main-title">
+          <!-- <h2 class="main-title">
             Proxy Memo — {selectedFiling.subject}
-          </h2>
-
+          </h2> -->
+{#if editMode}
+  <div class="title-edit">
+    <label>PROPOSAL TOPIC</label>
+    <input
+      class="title-input"
+      bind:value={selectedFiling.subject}
+    />
+  </div>
+{:else}
+  <h2 class="main-title">
+    Proxy Memo — {selectedFiling.subject}
+  </h2>
+{/if}
           <p class="date">
             Filed {new Date(selectedFiling.created_at).toLocaleDateString()}
           </p>
@@ -846,4 +858,14 @@
     cursor: pointer;
     font-weight: 600;
   }
+
+
+  .title-edit {
+  width: 100%;
+}
+
+.title-input {
+  width: 100%;
+  box-sizing: border-box;
+}
 </style>

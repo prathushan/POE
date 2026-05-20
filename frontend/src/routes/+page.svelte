@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
-
+  import linkIcon from "$lib/assets/link-icon.png";
+  import linkedinLogo from "$lib/assets/linkedin-logo.png";
   let search = $state("");
   let prevSearch = ""; // ✅ FIX ADDED
   let filings = $state([]);
@@ -91,12 +92,16 @@
     });
 
     if (sortColumn) {
-      filtered.sort((a, b) => {
-        let valA = a[sortColumn] || "";
-        let valB = b[sortColumn] || "";
+      filtered = [...filtered].sort((a, b) => {
+        let valA = (a[sortColumn] || "-").toString().trim().toLowerCase();
 
-        valA = valA.toString().toLowerCase();
-        valB = valB.toString().toLowerCase();
+        let valB = (b[sortColumn] || "-").toString().trim().toLowerCase();
+
+        if (sortColumn === "created_at") {
+          return sortDirection === "asc"
+            ? new Date(a.created_at) - new Date(b.created_at)
+            : new Date(b.created_at) - new Date(a.created_at);
+        }
 
         return sortDirection === "asc"
           ? valA.localeCompare(valB)
@@ -345,11 +350,13 @@
             <hr />
 
             <div class="share-section">
-              <h4 class="section-title">SHARE THIS MEMO</h4>
+              <h4 class="section-title">Share Memo</h4>
 
-              <div class="share-buttons">
+              <div class="share-icons">
+                <!-- Copy Link -->
                 <button
-                  class="share-btn"
+                  class="icon-btn"
+                  aria-label="Copy Link"
                   on:click={async () => {
                     const url = getShareUrl();
 
@@ -361,27 +368,20 @@
                     }
                   }}
                 >
-                  🔗 Copy Link
+                  <img src={linkIcon} alt="Copy Link" />
                 </button>
 
+                <!-- LinkedIn Share -->
                 <a
-                  class="share-btn"
-                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(getShareUrl())}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Share on X
-                </a>
-
-                <a
-                  class="share-btn"
+                  class="icon-btn"
                   href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
                     getShareUrl(),
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Share on LinkedIn"
                 >
-                  Share on LinkedIn
+                  <img src={linkedinLogo} alt="LinkedIn" />
                 </a>
               </div>
             </div>
@@ -437,16 +437,23 @@
           </div>
           <!--new section-->
           <div class="stat-item">
-            <div class="stat-number">
+            <!-- <div class="stat-number">
               {[...new Set(filings.map((f) => f.company_name))].length}
-            </div>
+            </div> -->
+ <div class="stat-number"> {stats.companies}</div>
+
+
             <div class="stat-label">Companies</div>
           </div>
 
           <div class="stat-item">
-            <div class="stat-number">
+            <!-- <div class="stat-number">
               {[...new Set(filings.map((f) => f.filer_name))].length}
-            </div>
+            </div> -->
+            <div class="stat-number">
+  {stats.filers}
+</div>
+
             <div class="stat-label">Filers</div>
           </div>
 
@@ -658,13 +665,9 @@
     user-select: none;
   }
 
-  .share-section {
-    margin-top: 24px;
-  }
-
   .share-buttons {
     display: flex;
-    gap: 10px;
+    gap: 40px;
     flex-wrap: wrap;
   }
 
@@ -682,5 +685,55 @@
 
   .share-btn:hover {
     background: #f3f4f6;
+  }
+
+  .share-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .share-icons {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .icon-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 0;
+    text-decoration: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+
+  .icon-btn:hover {
+    transform: translateY(-2px);
+    border-color: #2563eb;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.16);
+  }
+
+  .icon-btn img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
   }
 </style>

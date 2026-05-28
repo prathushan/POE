@@ -51,16 +51,16 @@
       <div class="logo-seal">POE</div>
       <div class="logo-text">
         <h1>Proxy Open Exchange</h1>
-        <p>Shareholder Proxy Memo Publishing Platform</p>
+        <p>Shareholder Exempt Solicitation Publishing Platform</p>
       </div>
     </a>
-
+    
     <nav class="header-nav">
       <a href="/">Home</a>
       <a href="/about">About</a>
 
       {#if data.user}
-        <a href="/dashboard">Submit Proxy Memo</a>
+        <a href="/dashboard">Submit Exempt Solicitation</a>
 
         <button class="btn-logout" onclick={logout}> Logout </button>
       {:else}
@@ -75,10 +75,10 @@
 <div class="submit-bar">
   <div class="container submit-bar-inner">
     <a href="/login">
-      <button class="btn-cta">Submit Proxy Memo →</button>
+      <button class="btn-cta">Submit Exempt Solicitation  →</button>
     </a>
     <div class="submit-bar-text">
-      Publish your Proxy Memo to the public record.
+      Publish your Exempt Solicitation to the public record.
       <a href="/about">Why POE?</a>
     </div>
   </div>
@@ -104,8 +104,8 @@
       <div>
         <h5>Navigate</h5>
         <ul>
-          <li><a href="/">Browse Proxy Memos</a></li>
-          <li><a href="/login">Submit Proxy Memo</a></li>
+          <li><a href="/">Browse Exempt Solicitation</a></li>
+          <li><a href="/login">Submit Exempt Solicitation</a></li>
           <li><a href="/about">About POE</a></li>
           <li><a href="/terms">Terms of Use</a></li>
         </ul>

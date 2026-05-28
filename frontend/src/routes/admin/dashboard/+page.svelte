@@ -207,7 +207,7 @@
       class="admin-submit-btn"
       on:click={() => (window.location.href = "/admin/submit")}
     >
-      + Submit Proxy Memo
+      + Submit Exempt Solicitation 
     </button>
   </div>
 
@@ -308,7 +308,7 @@
             </div>
           {:else}
             <h2 class="main-title">
-              Proxy Memo — {selectedFiling.subject}
+              Exempt Solicitation  — {selectedFiling.subject}
             </h2>
           {/if}
           <p class="date">

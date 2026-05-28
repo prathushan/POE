@@ -124,8 +124,8 @@
 <!-- SEARCH HERO -->
 <div class="search-hero">
   <div class="container">
-    <h2>Search Proxy Memos</h2>
-    <!-- <p>Browse shareholder proxy memos published on the Proxy Open Exchange.</p> -->
+    <h2>Search Exempt Solicitations</h2>
+    <!-- <p>Browse shareholder exempt solicitations published on the Proxy Open Exchange.</p> -->
 
     <div class="search-box">
       <input
@@ -142,7 +142,7 @@
   <!-- LEFT TABLE -->
   <div>
     <div class="section-header">
-      <h3>Recent Proxy Memos</h3>
+      <h3>Recent Exempt Solicitation </h3>
     </div>
 
     <!-- ✅ SHOWING TEXT -->
@@ -273,7 +273,7 @@
 
             <!-- TITLE -->
             <h2 class="modal-title">
-              Proxy Memo — {selectedFiling.subject}
+              Exempt Solicitation — {selectedFiling.subject}
             </h2>
 
             <!-- META -->

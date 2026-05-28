@@ -116,34 +116,31 @@
     closeModal();
   }
 
-
   async function saveEdit() {
-  const res = await fetch("/api/admin/update-filing", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(selectedFiling)
-  });
+    const res = await fetch("/api/admin/update-filing", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(selectedFiling),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (res.ok) {
-    alert("Updated successfully");
+    if (res.ok) {
+      alert("Updated successfully");
 
-    filings = filings.map(f =>
-      f.id === selectedFiling.id ? selectedFiling : f
-    );
+      filings = filings.map((f) =>
+        f.id === selectedFiling.id ? selectedFiling : f,
+      );
 
-    editMode = false;
+      editMode = false;
 
-    updateUI();
-  } else {
-    alert(data.message || "Update failed");
+      updateUI();
+    } else {
+      alert(data.message || "Update failed");
+    }
   }
-}
-
-
 </script>
 
 <svelte:head>
@@ -304,19 +301,16 @@
           <!-- <h2 class="main-title">
             Proxy Memo — {selectedFiling.subject}
           </h2> -->
-{#if editMode}
-  <div class="title-edit">
-    <label>PROPOSAL TOPIC</label>
-    <input
-      class="title-input"
-      bind:value={selectedFiling.subject}
-    />
-  </div>
-{:else}
-  <h2 class="main-title">
-    Proxy Memo — {selectedFiling.subject}
-  </h2>
-{/if}
+          {#if editMode}
+            <div class="title-edit">
+              <label>PROPOSAL TOPIC</label>
+              <input class="title-input" bind:value={selectedFiling.subject} />
+            </div>
+          {:else}
+            <h2 class="main-title">
+              Proxy Memo — {selectedFiling.subject}
+            </h2>
+          {/if}
           <p class="date">
             Filed {new Date(selectedFiling.created_at).toLocaleDateString()}
           </p>
@@ -432,13 +426,10 @@
           <button class="edit" on:click={() => (editMode = !editMode)}>
             {editMode ? "CANCEL" : "EDIT"}
           </button>
-          
-          {#if editMode}
-          <button class="save" on:click={saveEdit}>
-          SAVE CHANGES
-           </button>
-          {/if}
 
+          {#if editMode}
+            <button class="save" on:click={saveEdit}> SAVE CHANGES </button>
+          {/if}
 
           <button
             class="approve"
@@ -767,7 +758,7 @@
     background: #e8f0fe;
   }
 
-    .modal-footer .save {
+  .modal-footer .save {
     background: #fde8e4;
     border: 1px solid #c53030;
     color: #c53030;
@@ -780,8 +771,6 @@
   .modal-footer .save:hover {
     background: #fbd5d5;
   }
-
-
 
   .status-row {
     display: flex;
@@ -859,13 +848,12 @@
     font-weight: 600;
   }
 
-
   .title-edit {
-  width: 100%;
-}
+    width: 100%;
+  }
 
-.title-input {
-  width: 100%;
-  box-sizing: border-box;
-}
+  .title-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
 </style>

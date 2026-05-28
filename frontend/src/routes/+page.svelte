@@ -142,7 +142,7 @@
   <!-- LEFT TABLE -->
   <div>
     <div class="section-header">
-      <h3>Recent Exempt Solicitation </h3>
+      <h3>Recent Exempt Solicitations </h3>
     </div>
 
     <!-- ✅ SHOWING TEXT -->

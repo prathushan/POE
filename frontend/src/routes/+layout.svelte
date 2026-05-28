@@ -104,7 +104,7 @@
       <div>
         <h5>Navigate</h5>
         <ul>
-          <li><a href="/">Browse Exempt Solicitation</a></li>
+          <li><a href="/">Browse Exempt Solicitations</a></li>
           <li><a href="/login">Submit Exempt Solicitation</a></li>
           <li><a href="/about">About POE</a></li>
           <li><a href="/terms">Terms of Use</a></li>

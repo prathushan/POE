@@ -31,6 +31,19 @@
   <link rel="icon" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
   <meta name="theme-color" content="#000000" />
+
+   <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BCSQWKEKY3"></script>
+
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-BCSQWKEKY3');
+  </script>
+
+
+
 </svelte:head>
 <!-- TOP BAR -->
 <!-- <div class="top-bar">

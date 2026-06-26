@@ -32,19 +32,26 @@
   <link rel="apple-touch-icon" href="/favicon.png" />
   <meta name="theme-color" content="#000000" />
 
-   <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BCSQWKEKY3"></script>
-
+  <!-- Google Tag Manager -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-BCSQWKEKY3');
+    (function (w, d, s, l, i) {
+      w[l] = w[l] || [];
+
+      w[l].push({
+        "gtm.start": new Date().getTime(),
+        event: "gtm.js",
+      });
+      var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s),
+        dl = l != "dataLayer" ? "&l=" + l : "";
+      j.async = true;
+      j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+      f.parentNode.insertBefore(j, f);
+    })(window, document, "script", "dataLayer", "GTM-5N5WK7RG");
   </script>
-
-
-
+  <!-- End Google Tag Manager -->
 </svelte:head>
+
 <!-- TOP BAR -->
 <!-- <div class="top-bar">
   <div class="container">
@@ -56,7 +63,14 @@
     </div>
   </div>
 </div> -->
-
+<noscript>
+  <iframe
+    src="https://www.googletagmanager.com/ns.html?id=GTM-5N5WK7RG"
+    height="0"
+    width="0"
+    style="display:none;visibility:hidden"
+  ></iframe>
+</noscript>
 <!-- HEADER -->
 <header>
   <div class="container header-main">
@@ -67,7 +81,7 @@
         <p>Shareholder Exempt Solicitation Publishing Platform</p>
       </div>
     </a>
-    
+
     <nav class="header-nav">
       <a href="/">Home</a>
       <a href="/about">About</a>
@@ -88,7 +102,7 @@
 <div class="submit-bar">
   <div class="container submit-bar-inner">
     <a href="/login">
-      <button class="btn-cta">Submit Exempt Solicitation  →</button>
+      <button class="btn-cta">Submit Exempt Solicitation →</button>
     </a>
     <div class="submit-bar-text">
       Publish your Exempt Solicitation to the public record.
@@ -134,7 +148,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-               SEC Rule Change
+              SEC Rule Change
             </a>
           </li>
 

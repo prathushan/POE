@@ -471,6 +471,16 @@
         <ul class="resource-list">
           <li>
             <a
+              href="https://docs.google.com/forms/d/e/1FAIpQLSdP-3Ui9cAX_GkrbWAvAIleA0PV6s38GYP7C5kTZYpXjGY45A/viewform"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              → Submit Proposal
+            </a>
+          </li>
+
+          <li>
+            <a
               href="https://www.sec.gov/about/divisions-offices/division-corporation-finance/proxy-rules-schedules-14a14c-notice-012725"
               target="_blank"
               rel="noopener noreferrer"

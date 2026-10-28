@@ -17,7 +17,7 @@ body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-heigh
 .container{max-width:1200px;margin:0 auto;padding:0 24px;}
 
 /* TOP BAR */
-.top-bar{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:11px;letter-spacing:.05em;padding:6px 0;text-transform:uppercase;}
+.top-bar{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:12px;letter-spacing:.05em;padding:6px 0;text-transform:uppercase;}
 .top-bar .container{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
 .top-bar a{color:var(--g3);text-decoration:none;cursor:pointer;}
 .top-bar a:hover{color:var(--gold);}
@@ -603,3 +603,6 @@ footer ul a:hover{color:var(--gold);}
 .logo-group:hover {
   opacity: 0.85;
 }
+
+
+/* Style for Pop up  */

@@ -475,7 +475,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              → Submit Proposal
+              → Submit Proposal (Beta)
             </a>
           </li>
 

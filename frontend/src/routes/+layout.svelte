@@ -53,13 +53,13 @@
 </svelte:head>
 
 <!-- TOP BAR -->
-<div class="top-bar">
+<!-- <div class="top-bar">
   <div class="container">
     <span>POE — Public Proxy Filing System</span>
     <div class="top-links">
-      <!-- <a href="/about">About POE</a>
+      <a href="/about">About POE</a>
      <a href="/terms">Terms</a>
-      <a href="/login">Sign In</a> -->
+      <a href="/login">Sign In</a>
            <div class="submit-bar-text">
         Want to publish a resolution?
         <a
@@ -73,7 +73,7 @@
 
     </div>
   </div>
-</div>
+</div> -->
 <noscript>
   <iframe
     src="https://www.googletagmanager.com/ns.html?id=GTM-5N5WK7RG"
@@ -115,8 +115,16 @@
     <a href="/login">
       <button class="btn-cta">Submit Exempt Solicitation →</button>
     </a>
-   
-    <div class="submit-bar-text">
+  
+
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdP-3Ui9cAX_GkrbWAvAIleA0PV6s38GYP7C5kTZYpXjGY45A/viewform"
+          target="_blank"
+          rel="noopener noreferrer">
+      <button class="btn-cta">Submit A Proposal (Beta) →</button>
+    </a>
+
+
+    <!-- <div class="submit-bar-text">
         Want to publish a resolution?
         <a
           href="https://docs.google.com/forms/d/e/1FAIpQLSdP-3Ui9cAX_GkrbWAvAIleA0PV6s38GYP7C5kTZYpXjGY45A/viewform"
@@ -125,7 +133,7 @@
           >
           Click here.
           </a>
-     </div>
+     </div> -->
 
   </div>
 </div>

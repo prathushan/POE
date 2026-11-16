@@ -1,5 +1,8 @@
 <script>
   import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
+  import ProposalDetail from "$lib/ProposalDetail.svelte";
+  import { fmtDate } from "$lib/formatDate.js";
   import linkIcon from "$lib/assets/link-icon.png";
   import linkedinLogo from "$lib/assets/linkedin-logo.png";
   let search = $state("");
@@ -13,16 +16,83 @@
     pending: 0,
   });
 
-  let sortColumn = $state("");
-  let sortDirection = $state("asc");
+  let sortColumn = $state("created_at");
+  let sortDirection = $state("desc"); // newest first, so just-approved proposals show on top
+
+  let detailOpen = $state(false);
 
   function openModal(filing) {
+    // Proposal-centric: clicking a row opens the unified detail popup.
     selectedFiling = filing;
+    detailOpen = true;
   }
 
   function closeModal() {
+    detailOpen = false;
     selectedFiling = null;
   }
+
+  // the selected proposal's approved attachments (for the detail popup tabs)
+  const detailExempt = $derived(
+    selectedFiling
+      ? filings.find((x) => x.proposal_id === selectedFiling.id && x.filing_type === "exempt_solicitation") ?? null
+      : null
+  );
+  const detailNoAction = $derived(
+    selectedFiling
+      ? filings.find((x) => x.proposal_id === selectedFiling.id && x.filing_type === "no_action") ?? null
+      : null
+  );
+
+  // ── proposal-centric helpers ──
+  const isLegacy = (f) =>
+    f.filing_type === "exempt_solicitation" && !f.proposal_id;
+  const isIndexRow = (f) => f.filing_type === "proposal" || isLegacy(f);
+  const companyLabel = (f) =>
+    f.filing_type === "proposal" ? f.company_name || "-" : f.memo_submitter || f.company_name || "-";
+  const topicLabel = (f) => f.proposal_topic || f.subject || "";
+  const exemptLabel = (f) => (isLegacy(f) ? "Legacy" : f.has_exempt_solicitation ? "Yes" : "No");
+  const noActionLabel = (f) => (isLegacy(f) ? "—" : f.has_no_action ? "Yes" : "No");
+  const exclusionLabel = (f) =>
+    isLegacy(f) ? "—" : f.proxy_status ? f.proxy_status.charAt(0).toUpperCase() + f.proxy_status.slice(1) : "Pending";
+
+  function colValue(f, col) {
+    switch (col) {
+      case "company": return companyLabel(f).trim().toLowerCase();
+      case "created_at": return new Date(f.created_at).getTime();
+      case "filer": return (f.filer_name || "").trim().toLowerCase();
+      case "topic": return topicLabel(f).trim().toLowerCase();
+      case "exempt": return exemptLabel(f).toLowerCase();
+      case "no_action": return noActionLabel(f);
+      case "exclusion": return exclusionLabel(f).toLowerCase();
+      default: return "";
+    }
+  }
+
+  function arrow(col) {
+    // non-breaking space so the arrow never drops to its own line below the label
+    if ((sortColumn || "company") !== col) return " ↕";
+    return sortDirection === "asc" ? " ↑" : " ↓";
+  }
+
+  // Dynamic tracker — computed from the live approved data, so it updates
+  // automatically whenever records are added/removed (on next load of public data).
+  const tracker = $derived.by(() => {
+    const indexRows = filings.filter(isIndexRow);
+    const companies = new Set(
+      indexRows.map((f) => companyLabel(f).trim().toLowerCase()).filter(Boolean)
+    );
+    const filers = new Set(
+      filings.map((f) => (f.filer_name || "").trim().toLowerCase()).filter(Boolean)
+    );
+    return {
+      proposals: filings.filter((f) => f.filing_type === "proposal").length,
+      noAction: filings.filter((f) => f.filing_type === "no_action").length,
+      exempt: filings.filter((f) => f.filing_type === "exempt_solicitation").length,
+      companies: companies.size,
+      filers: filers.size,
+    };
+  });
 
   // pagination
   let currentPage = $state(1);
@@ -77,37 +147,32 @@
   // );
 
   const filteredFilings = $derived.by(() => {
+    const term = search.toLowerCase();
     let filtered = filings.filter((f) => {
-      const term = search.toLowerCase();
-
+      // proposal-centric: only proposals + legacy standalone exempt solicitations
+      if (!isIndexRow(f)) return false;
+      if (!term) return true;
       return (
-        f.company_name?.toLowerCase().includes(term) ||
+        companyLabel(f).toLowerCase().includes(term) ||
         f.filer_name?.toLowerCase().includes(term) ||
         f.company_cik?.includes(term) ||
         f.filer_cik?.includes(term) ||
-        f.memo_submitter?.toLowerCase().includes(term) ||
-        f.created_at?.toLowerCase().includes(term) ||
-        f.accession_number?.toLowerCase().includes(term)
+        topicLabel(f).toLowerCase().includes(term) ||
+        f.proposal_text?.toLowerCase().includes(term) ||
+        f.exclusion_basis?.toLowerCase().includes(term)
       );
     });
 
-    if (sortColumn) {
-      filtered = [...filtered].sort((a, b) => {
-        let valA = (a[sortColumn] || "-").toString().trim().toLowerCase();
-
-        let valB = (b[sortColumn] || "-").toString().trim().toLowerCase();
-
-        if (sortColumn === "created_at") {
-          return sortDirection === "asc"
-            ? new Date(a.created_at) - new Date(b.created_at)
-            : new Date(b.created_at) - new Date(a.created_at);
-        }
-
-        return sortDirection === "asc"
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
-      });
-    }
+    // default sort: Company A–Z
+    const col = sortColumn || "company";
+    filtered = [...filtered].sort((a, b) => {
+      const va = colValue(a, col);
+      const vb = colValue(b, col);
+      let cmp;
+      if (typeof va === "number" && typeof vb === "number") cmp = va - vb;
+      else cmp = String(va).localeCompare(String(vb));
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
 
     return filtered;
   });
@@ -124,13 +189,13 @@
 <!-- SEARCH HERO -->
 <div class="search-hero">
   <div class="container">
-    <h2>Search Exempt Solicitations</h2>
-    <!-- <p>Browse shareholder exempt solicitations published on the Proxy Open Exchange.</p> -->
+    <h2>Search Proposals</h2>
+    <!-- <p>Browse shareholder proposals, no-action/exclusion notices, and exempt solicitations filed on the Proxy Open Exchange.</p> -->
 
     <div class="search-box">
       <input
         bind:value={search}
-        placeholder="Search by company, filer, CIK, or keyword..."
+        placeholder="Search by company, filer, proposal topic, or resolution text..."
       />
       <button>Search</button>
     </div>
@@ -142,7 +207,7 @@
   <!-- LEFT TABLE -->
   <div>
     <div class="section-header">
-      <h3>Recent Exempt Solicitations </h3>
+      <h3>All Proposals</h3>
     </div>
 
     <!-- ✅ SHOWING TEXT -->
@@ -173,234 +238,37 @@
 
       <thead>
         <tr>
-          <th on:click={() => sortBy("memo_submitter")}>
-            Company
-            <!-- {#if sortColumn === 'memo_submitter'}
-        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
-      {/if} -->
-            {sortColumn === "memo_submitter"
-              ? sortDirection === "asc"
-                ? " ↑"
-                : " ↓"
-              : " ↕"}
-          </th>
-
-          <th on:click={() => sortBy("company_name")}>
-            Submitted By
-            <!-- {#if sortColumn === 'company_name'}
-        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
-      {/if} -->
-            {sortColumn === "company_name"
-              ? sortDirection === "asc"
-                ? " ↑"
-                : " ↓"
-              : " ↕"}
-          </th>
-
-          <th on:click={() => sortBy("subject")}>
-            Proposal Topic
-            <!-- {#if sortColumn === 'subject'}
-        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
-      {/if} -->
-            {sortColumn === "subject"
-              ? sortDirection === "asc"
-                ? " ↑"
-                : " ↓"
-              : " ↕"}
-          </th>
-
-          <th on:click={() => sortBy("created_at")}>
-            Posted
-            <!-- {#if sortColumn === 'created_at'}
-        {sortDirection === 'asc' ? ' ↑' : ' ↓'}
-      {/if} -->
-            {sortColumn === "created_at"
-              ? sortDirection === "asc"
-                ? " ↑"
-                : " ↓"
-              : " ↕"}
-          </th>
+          <th on:click={() => sortBy("company")}>Company{arrow("company")}</th>
+          <th on:click={() => sortBy("created_at")}>Date{arrow("created_at")}</th>
+          <th on:click={() => sortBy("filer")}>Filer{arrow("filer")}</th>
+          <th on:click={() => sortBy("topic")}>Proposal Topic{arrow("topic")}</th>
+          <th class="ctr" on:click={() => sortBy("exempt")}>Exempt Solicitation{arrow("exempt")}</th>
+          <th class="ctr" on:click={() => sortBy("no_action")}>No-Action{arrow("no_action")}</th>
+          <th class="ctr" on:click={() => sortBy("exclusion")}>Exclusion{arrow("exclusion")}</th>
         </tr>
       </thead>
       <tbody>
-        {#if filings.length === 0}
-          <tr>
-            <td colspan="5">No approved filings yet</td>
-          </tr>
+        {#if filteredFilings.length === 0}
+          <tr><td colspan="7" style="text-align:center;color:#888;padding:24px;">No proposals yet</td></tr>
         {:else}
           {#each getPaginated() as f}
             <tr class="clickable-row" on:click={() => openModal(f)}>
               <td>
-                <strong>{f.memo_submitter}</strong><br />
-                <!-- <span class="sub">CIK: {f.filer_cik || "-"}</span> -->
+                <strong>{companyLabel(f)}</strong>
+                {#if isLegacy(f)}<br /><span class="legacy-tag">Legacy filing</span>{/if}
               </td>
-
-              <!-- FORM (STATIC) -->
-              <!-- <td>
-                <span class="filing-type">PX14A6G</span>
-              </td> -->
-
-              <!-- REGISTRANT -->
-              <td>
-                <strong>{f.company_name}</strong><br />
-                <!-- <span class="sub">CIK: {f.company_cik || "-"}</span> -->
-              </td>
-
-              <!-- FILER -->
-
-              <!-- ACCESSION -->
-              <td class="link">{f.subject}</td>
-
-              <!-- DATE -->
-              <td>{new Date(f.created_at).toLocaleDateString()}</td>
+              <td class="nowrap">{fmtDate(f.created_at)}</td>
+              <td>{f.filer_name || "-"}</td>
+              <td>{#if topicLabel(f)}<span class="topic-badge">{topicLabel(f)}</span>{:else}—{/if}</td>
+              <td class="ctr"><span class={exemptLabel(f) === 'Yes' ? 'yn-yes' : exemptLabel(f) === 'Legacy' ? 'yn-legacy' : 'yn-no'}>{exemptLabel(f)}</span></td>
+              <td class="ctr"><span class={noActionLabel(f) === 'Yes' ? 'yn-yes' : 'yn-no'}>{noActionLabel(f)}</span></td>
+              <td class="ctr">{#if exclusionLabel(f) === '—'}<span class="yn-no">—</span>{:else}<span class="proxy-status-badge proxy-{exclusionLabel(f).toLowerCase()}">{exclusionLabel(f)}</span>{/if}</td>
             </tr>
           {/each}
         {/if}
       </tbody>
     </table>
-    {#if selectedFiling}
-      <div class="modal-overlay" on:click={closeModal}>
-        <div class="modal" on:click|stopPropagation>
-          <!-- HEADER -->
-          <div class="modal-header">
-            <!-- <span>{selectedFiling.accession_number}</span> -->
-            <button on:click={closeModal}>×</button>
-          </div>
-
-          <div class="modal-body">
-            <!-- TAG -->
-            <!-- <span class="tag">PX14A6G</span> -->
-
-            <!-- TITLE -->
-            <h2 class="modal-title">
-              Exempt Solicitation — {selectedFiling.subject}
-            </h2>
-
-            <!-- META -->
-            <p class="meta">
-              Filed {new Date(selectedFiling.created_at).toLocaleDateString()}
-            </p>
-
-            <hr />
-
-            <!-- FILING INFO -->
-            <h4 class="section-title">PROXY INFORMATION</h4>
-
-            <div class="info-grid">
-              <div class="label">COMPANY NAME</div>
-              <div class="value">{selectedFiling.memo_submitter}</div>
-
-              <!-- <div class="label">DEF 14A FILING</div>
-           <div class="value">
-                <a href={selectedFiling.def14a_link} target="_blank">
-                  {selectedFiling.def14a_link}
-                </a>
-              </div>    -->
-
-              <div class="label">DEF 14A FILING</div>
-              <div class="value">
-                <a
-                  href={selectedFiling.def14a_link?.startsWith("http")
-                    ? selectedFiling.def14a_link
-                    : "https://" + selectedFiling.def14a_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {selectedFiling.def14a_link}
-                </a>
-              </div>
-
-              <div class="label">PROPOSAL ITEM</div>
-              <div class="value">{selectedFiling.item_number || "-"}</div>
-
-              <div class="label">ORGANIZATION NAME</div>
-              <div class="value">{selectedFiling.company_name}</div>
-
-              <div class="label">ORGANIZATION CIK</div>
-              <div class="value">{selectedFiling.company_cik || "-"}</div>
-
-              <!-- <div class="label">FILER CIK</div>
-              <div class="value">{selectedFiling.filer_cik || "-"}</div> -->
-
-              <div class="label">CONTACT</div>
-              <div class="value">
-                {selectedFiling.contact_name || "-"} · {selectedFiling.contact_email ||
-                  "-"}
-              </div>
-            </div>
-
-            <hr />
-
-            <!-- FILE -->
-            <h4 class="section-title">WRITTEN MATERIALS</h4>
-
-            {#if selectedFiling.pdf_s3_key}
-              <div class="file-box">
-                📄
-                <a
-                  href={`/${selectedFiling.pdf_s3_key.replace("static/", "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {selectedFiling.pdf_filename}
-                </a>
-              </div>
-            {/if}
-
-            <hr />
-
-            <div class="share-section">
-              <h4 class="section-title">Share Memo</h4>
-
-              <div class="share-icons">
-                <!-- Copy Link -->
-                <button
-                  class="icon-btn"
-                  aria-label="Copy Link"
-                  on:click={async () => {
-                    const url = getShareUrl();
-
-                    try {
-                      await navigator.clipboard.writeText(url);
-                      alert("Link copied!");
-                    } catch (err) {
-                      prompt("Copy this link:", url);
-                    }
-                  }}
-                >
-                  <img src={linkIcon} alt="Copy Link" />
-                </button>
-
-                <!-- LinkedIn Share -->
-                <a
-                  class="icon-btn"
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                    getShareUrl(),
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Share on LinkedIn"
-                >
-                  <img src={linkedinLogo} alt="LinkedIn" />
-                </a>
-              </div>
-            </div>
-
-            <hr />
-
-            <!-- DESCRIPTION -->
-            <!-- <h4 class="section-title">DESCRIPTION</h4>
-            <p class="desc">{selectedFiling.description}</p> -->
-
-            <!-- DISCLAIMER -->
-            <div class="disclaimer">
-              THIS INFORMATION SHOULD NOT BE CONSTRUED AS INVESTMENT ADVICE OR
-              AS A SOLICITATION OF AUTHORITY TO VOTE YOUR PROXY.
-            </div>
-          </div>
-        </div>
-      </div>
-    {/if}
+    <ProposalDetail bind:open={detailOpen} record={selectedFiling} exempt={detailExempt} noAction={detailNoAction} />
     <!-- ✅ PAGINATION -->
     <div class="pagination">
       <button
@@ -428,35 +296,29 @@
   <!-- RIGHT SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-card">
-      <div class="sidebar-card-header">Statistics</div>
+      <div class="sidebar-card-header">Proposal Tracker</div>
       <div class="sidebar-card-body">
         <div class="stat-grid">
           <div class="stat-item">
-            <div class="stat-number">{stats.total}</div>
-            <div class="stat-label">Total</div>
-          </div>
-          <!--new section-->
-          <div class="stat-item">
-            <!-- <div class="stat-number">
-              {[...new Set(filings.map((f) => f.company_name))].length}
-            </div> -->
- <div class="stat-number"> {stats.companies}</div>
-
-
+            <div class="stat-number">{tracker.companies}</div>
             <div class="stat-label">Companies</div>
           </div>
-
           <div class="stat-item">
-            <!-- <div class="stat-number">
-              {[...new Set(filings.map((f) => f.filer_name))].length}
-            </div> -->
-            <div class="stat-number">
-  {stats.filers}
-</div>
-
+            <div class="stat-number">{tracker.filers}</div>
             <div class="stat-label">Filers</div>
           </div>
-
+          <div class="stat-item">
+            <div class="stat-number">{tracker.proposals}</div>
+            <div class="stat-label">Proposals</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{tracker.noAction}</div>
+            <div class="stat-label">No-Action</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{tracker.exempt}</div>
+            <div class="stat-label">Exempt Solicitation</div>
+          </div>
           <div class="stat-item">
             <div class="stat-number">{stats.pending}</div>
             <div class="stat-label">Pending</div>
@@ -469,16 +331,6 @@
       <div class="sidebar-card-header">Resources</div>
       <div class="sidebar-card-body">
         <ul class="resource-list">
-          <li>
-            <a
-              href="https://docs.google.com/forms/d/e/1FAIpQLSdP-3Ui9cAX_GkrbWAvAIleA0PV6s38GYP7C5kTZYpXjGY45A/viewform"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              → Submit Proposal (Beta)
-            </a>
-          </li>
-
           <li>
             <a
               href="https://www.sec.gov/about/divisions-offices/division-corporation-finance/proxy-rules-schedules-14a14c-notice-012725"
@@ -514,6 +366,48 @@
   .clickable-row:hover {
     background: #f9f7f3;
   }
+
+  /* proposal-centric index — fixed layout so it never scrolls horizontally */
+  .filing-table { table-layout: fixed; width: 100%; }
+  .filing-table thead th {
+    cursor: pointer; user-select: none;
+    white-space: normal; word-break: normal; overflow-wrap: break-word; hyphens: auto;
+    font-size: 10px; letter-spacing: 0.03em; color: var(--g4);
+    padding: 11px 7px; vertical-align: bottom; line-height: 1.25;
+  }
+  .filing-table td { word-break: normal; overflow-wrap: break-word; padding: 11px 7px; vertical-align: top; font-size: 13px; }
+  .filing-table th:nth-child(1), .filing-table td:nth-child(1) { width: 16%; }  /* Company */
+  .filing-table th:nth-child(2), .filing-table td:nth-child(2) { width: 13%; white-space: nowrap; font-size: 11.5px; }  /* Date */
+  .filing-table th:nth-child(3), .filing-table td:nth-child(3) { width: 14%; }  /* Filer */
+  .filing-table th:nth-child(4), .filing-table td:nth-child(4) { width: 15%; }  /* Proposal Topic */
+  .filing-table th:nth-child(5), .filing-table td:nth-child(5) { width: 17%; }  /* Exempt Solicitation */
+  .filing-table th:nth-child(6), .filing-table td:nth-child(6) { width: 10%; }  /* No-Action */
+  .filing-table th:nth-child(7), .filing-table td:nth-child(7) { width: 15%; }  /* Exclusion */
+  .filing-table td.ctr, .filing-table th.ctr { text-align: left; }
+  .nowrap { white-space: nowrap; }
+  .legacy-tag { font-size: 11px; color: #9a8f78; font-style: italic; }
+  /* Status pills — match the prototype (.topic-badge / .yn-yes / .proxy-status-badge) */
+  .topic-badge {
+    display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 600;
+    padding: 3px 8px; border-radius: 3px; background: #e8f0fe; color: var(--blue);
+  }
+  .yn-yes {
+    display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--green); background: var(--green-light); padding: 2px 8px; border-radius: 3px;
+  }
+  .yn-no { font-family: var(--mono); font-size: 11px; color: var(--g3); }
+  .yn-legacy {
+    display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--orange); background: var(--orange-light); padding: 2px 8px; border-radius: 3px;
+  }
+  .proxy-status-badge {
+    display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 600;
+    padding: 3px 8px; border-radius: 3px;
+  }
+  .proxy-included { background: var(--green-light); color: var(--green); }
+  .proxy-excluded { background: var(--red-light); color: var(--red); }
+  .proxy-withdrawn { background: var(--orange-light); color: var(--orange); }
+  .proxy-pending { background: #f0f0ec; color: var(--g4); }
 
   /* MODAL */
   .modal-overlay {

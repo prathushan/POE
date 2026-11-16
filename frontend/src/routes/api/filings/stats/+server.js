@@ -3,7 +3,8 @@
 import { json } from '@sveltejs/kit';
 import pool from '$lib/server/db';
 
-export const GET = async () => {
+export const GET = async ({ setHeaders }) => {
+  setHeaders({ 'cache-control': 'no-store' });
   try {
  
 // const result = await pool.query(`

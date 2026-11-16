@@ -1,19 +1,8 @@
-// export const load = async ({ locals }) => {
-//   console.log("LOCALS USER:", locals.user);
- 
-//   return {
-//     user: locals. User
-//   };
-// };
+import { redirect } from '@sveltejs/kit';
 
-export const load = async ({ locals, setHeaders }) => {
-console.log("LOCALS USER:", locals.user); 
-  // 🔥 disable cache completely
-  setHeaders({
-    'cache-control': 'no-store'
-  });
- 
-  return {
-    user: locals.user
-  };
+// Submitting now happens via the "Submit Filing" popup (SubmitFilingModal),
+// opened from the header. This old page is retired — send visitors home.
+// (This route will later become the "My Filings" page per Phase 2 scope.)
+export const load = async () => {
+  throw redirect(302, '/');
 };

@@ -28,11 +28,12 @@ const { Pool } = pkg;
  
 import { DATABASE_URL } from '$env/static/private';
  
+// Local dev connects to a localhost Postgres (no SSL); production RDS requires SSL.
+const isLocal = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(DATABASE_URL);
+
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: isLocal ? false : { rejectUnauthorized: false }
 });
  
 export default pool;

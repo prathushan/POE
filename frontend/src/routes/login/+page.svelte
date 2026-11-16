@@ -112,6 +112,8 @@ async function login() {
     <label>Password</label>
     <input type="password" bind:value={password} placeholder="Password" />
 
+    <p class="auth-forgot"><a href="/forgot-password">Forgot password?</a></p>
+
     <button class="btn-auth" on:click={login}>SIGN IN</button>
 
     <p class="auth-footer">
@@ -121,3 +123,9 @@ async function login() {
 
   </div>
 </div>
+
+<style>
+  .auth-forgot { text-align: right; margin: 8px 0 4px; font-size: 13px; }
+  .auth-forgot a { color: #1f3b5b; text-decoration: none; }
+  .auth-forgot a:hover { text-decoration: underline; }
+</style>

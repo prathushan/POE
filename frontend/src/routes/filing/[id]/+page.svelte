@@ -1,351 +1,337 @@
 <script>
-  let { data } = $props();
+  import SubmitFilingModal from "$lib/SubmitFilingModal.svelte";
+  import { parseBases } from "$lib/exclusionBases.js";
 
-  const filing = data.filing;
+  let { data } = $props();
+  const { record, exempt, noAction, isLegacy } = data;
+  const user = data.user;
+  const isOwner = !!(user && record && user.id === record.filer_user_id);
+
+  let materialTab = $state("proposal");
+  let attachOpen = $state(false);
+  let attachMode = $state("");
+  let proxyStatus = $state(record?.proxy_status || "");
+  let agmKnown = $state(record?.meeting_date_known ? "known" : "estimated");
+  let saving = $state(false);
+
+  function openAttach(mode) {
+    attachMode = mode;
+    attachOpen = true;
+  }
+
+  async function saveProxy() {
+    saving = true;
+    try {
+      await fetch("/api/filings/update-proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: record.id,
+          proxy_status: proxyStatus || null,
+          meeting_date_known: agmKnown === "known",
+        }),
+      });
+    } finally {
+      saving = false;
+    }
+  }
+
+  const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }) : "-");
+  const statusLabel = record?.proxy_status
+    ? record.proxy_status.charAt(0).toUpperCase() + record.proxy_status.slice(1)
+    : "Pending";
+
+  // ── social share ──
+  let copied = $state(false);
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://proxyopenexchange.org";
+  const shareUrl = record ? `${origin}/filing/${record.id}` : "";
+  const shareTitle = record ? `${record.company_name || record.subject || "Shareholder Proposal"} — Proxy Open Exchange` : "";
+  const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`;
+  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+  const mailUrl = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareUrl)}`;
+  function copyLink() {
+    navigator.clipboard?.writeText(shareUrl).then(() => { copied = true; setTimeout(() => (copied = false), 1600); });
+  }
 </script>
 
-<!-- <svelte:head>
-  <title>{filing.subject}</title>
-
-  <meta property="og:title" content={filing.subject} />
-
-  <meta
-    property="og:description"
-    content={`Proxy memo submitted by ${filing.company_name}`}
-  />
-
-  <meta
-    property="og:url"
-    content={`https://proxyopenexchange.org/filing/${filing.id}`}
-  />
-
-  <meta property="og:type" content="website" />
-</svelte:head> -->
 <svelte:head>
-  <title>{filing.subject}</title>
-
-  <meta property="og:title" content={filing.subject} />
-
-  <meta
-    property="og:description"
-    content={`Proxy memo submitted by ${filing.company_name}`}
-  />
-
-  <meta
-    property="og:url"
-    content={`https://proxyopenexchange.org/filing/${filing.id}`}
-  />
-
-  <!-- ADD THIS -->
-  <meta
-    property="og:image"
-    content="https://proxyopenexchange.org/poe-share-image.png"
-  />
-
-  <!-- OPTIONAL BUT RECOMMENDED -->
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-
+  <title>{record?.company_name || record?.subject || "Filing"} — POE</title>
+  <meta property="og:title" content={record?.company_name || record?.subject} />
   <meta property="og:type" content="website" />
-
-  <meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
-<!-- <div class="filing-page">
-  <h1>{filing.subject}</h1>
 
-  <p>
-    <strong>Company Name:</strong>
-    {filing.memo_submitter}
-  </p>
-
-  <p>
-    <strong>DEF 14A Filing:</strong>
-
-    <a
-      href={filing.def14a_link?.startsWith("http")
-        ? filing.def14a_link
-        : "https://" + filing.def14a_link}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {filing.def14a_link}
-    </a>
-  </p>
-
-  <p>
-    <strong>Proposal Submitted By:</strong>
-    {filing.company_name}
-  </p>
-
-  <p>
-    <strong>Contact:</strong>
-    {filing.contact_name || "-"}
-  </p>
-
-  {#if filing.pdf_s3_key}
-    <p>
-      <a
-        href={`/${filing.pdf_s3_key.replace("static/", "")}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        📄 View Proxy Memo PDF
-      </a>
-    </p>
-  {/if}
-</div> -->
-<div class="filing-page">
-  <div class="modal-body">
-    <!-- TITLE -->
-    <h2 class="modal-title">
-      Proxy Memo — {filing.subject}
-    </h2>
-
-    <!-- META -->
-    <p class="meta">
-      Filed {new Date(filing.created_at).toLocaleDateString()}
-    </p>
-
-    <hr />
-
-    <!-- FILING INFO -->
-    <h4 class="section-title">PROXY INFORMATION</h4>
-
-    <div class="info-grid">
-      <div class="label">COMPANY NAME</div>
-      <div class="value">{filing.memo_submitter}</div>
-
-      <div class="label">DEF 14A FILING</div>
-
-      <div class="value">
-        <a
-          href={filing.def14a_link?.startsWith("http")
-            ? filing.def14a_link
-            : "https://" + filing.def14a_link}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {filing.def14a_link}
-        </a>
-      </div>
-
-      <div class="label">PROPOSAL ITEM</div>
-      <div class="value">{filing.item_number || "-"}</div>
-
-      <div class="label">ORGANIZATION NAME</div>
-      <div class="value">{filing.company_name}</div>
-
-      <div class="label">ORGANIZATION CIK</div>
-      <div class="value">{filing.company_cik || "-"}</div>
-
-      <div class="label">CONTACT</div>
-
-      <div class="value">
-        {filing.contact_name || "-"} ·
-        {filing.contact_email || "-"}
-      </div>
+<div class="detail-page">
+  <div class="card">
+    <div class="card-head">
+      <h3>
+        {#if isLegacy}
+          Exempt Solicitation — {record.subject || "-"}
+        {:else}
+          {record.company_name || "-"} — Shareholder Proposal
+        {/if}
+      </h3>
+      <a class="x" href="/" aria-label="Close">×</a>
     </div>
 
-    <hr />
+    <div class="card-body">
+      {#if isLegacy}
+        <!-- ─── LEGACY STANDALONE EXEMPT SOLICITATION ─── -->
+        <p class="date">Filed {fmt(record.created_at)}</p>
+        <div class="section">
+          <h4>PROXY INFORMATION</h4>
+          <div class="grid">
+            <div>Company</div><div>{record.memo_submitter || "-"}</div>
+            <div>DEF 14A Filing</div><div>{#if record.def14a_link}<a href={record.def14a_link} target="_blank" rel="noreferrer">{record.def14a_link}</a>{:else}-{/if}</div>
+            <div>Proposal Item</div><div>{record.item_number || "-"}</div>
+            <div>Topic</div><div>{record.subject || "-"}</div>
+            <div>Organization</div><div>{record.company_name || "-"}</div>
+            <div>Contact</div><div>{record.contact_name || "-"} · {record.contact_email || "-"}</div>
+          </div>
+        </div>
+        <div class="section">
+          <h4>WRITTEN MATERIALS</h4>
+          {#if record.pdf_s3_key}<a class="pdf-link" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {record.pdf_filename}</a>{/if}
+        </div>
+        <p class="legacy-note">This exempt solicitation was filed under POE Phase 1 as a standalone record. It is not linked to a parent proposal and has no no-action or proxy-status data.</p>
 
-    <!-- FILE -->
-    <h4 class="section-title">WRITTEN MATERIALS</h4>
+      {:else}
+        <!-- ─── UNIFIED PROPOSAL DETAIL ─── -->
+        <div class="top">
+          <div class="top-left">
+            <h2 class="company">{record.company_name || "-"}</h2>
+            <p class="date">
+              Filed: {fmt(record.created_at)} · Filer: {record.filer_name || "-"}
+              <span class="badge {record.proxy_status || 'pending'}">{statusLabel}</span>
+            </p>
+          </div>
 
-    {#if filing.pdf_s3_key}
-      <div class="file-box">
-        📄
+          {#if isOwner}
+            <div class="owner-panel">
+              <div class="owner-title">YOUR PROPOSAL</div>
+              <div class="attach-row">
+                {#if noAction}
+                  <span class="attached">✓ NO-ACTION ATTACHED</span>
+                {:else}
+                  <button onclick={() => openAttach("no_action")}>+ ATTACH NO-ACTION</button>
+                {/if}
+                {#if exempt}
+                  <span class="attached">✓ EXEMPT SOLICITATION ATTACHED</span>
+                {:else}
+                  <button onclick={() => openAttach("exempt")}>+ ATTACH EXEMPT SOLICITATION</button>
+                {/if}
+              </div>
+              <label class="owner-field">AGM Date
+                <select bind:value={agmKnown} onchange={saveProxy}>
+                  <option value="estimated">Estimated</option>
+                  <option value="known">Known</option>
+                </select>
+              </label>
+              <label class="owner-field">Proxy Status
+                <select bind:value={proxyStatus} onchange={saveProxy}>
+                  <option value="">Not yet known</option>
+                  <option value="included">Included</option>
+                  <option value="excluded">Excluded</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
+              </label>
+            </div>
+          {/if}
+        </div>
 
-        <a
-          href={`/${filing.pdf_s3_key.replace("static/", "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {filing.pdf_filename}
-        </a>
-      </div>
-    {/if}
+        <div class="pd-share">
+          <span class="pd-share-label">Share</span>
+          <button class="pd-sbtn copy" title={copied ? "Copied!" : "Copy link"} aria-label="Copy link" onclick={copyLink}>
+            {#if copied}
+              <svg viewBox="0 0 24 24" width="17" height="17"><path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            {:else}
+              <svg viewBox="0 0 24 24" width="17" height="17"><path fill="currentColor" d="M3.9 12a3.1 3.1 0 0 1 3.1-3.1h4V7H7a5 5 0 0 0 0 10h4v-1.9H7A3.1 3.1 0 0 1 3.9 12M8 13h8v-2H8v2m9-6h-4v1.9h4a3.1 3.1 0 0 1 0 6.2h-4V17h4a5 5 0 0 0 0-10"/></svg>
+            {/if}
+          </button>
+          <a class="pd-sbtn li" href={liUrl} target="_blank" rel="noreferrer" title="Share on LinkedIn" aria-label="LinkedIn"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.34 17V9.74H6.03V17h2.31M7.18 8.48a1.34 1.34 0 1 0 0-2.68 1.34 1.34 0 0 0 0 2.68M18 17v-3.98c0-2.07-1.12-3.03-2.61-3.03-1.2 0-1.74.66-2.04 1.12v-.96h-2.31V17h2.31v-4.05c0-.21.02-.43.08-.58.17-.43.56-.87 1.21-.87.86 0 1.2.65 1.2 1.6V17H18Z"/></svg></a>
+          <a class="pd-sbtn x" href={xUrl} target="_blank" rel="noreferrer" title="Share on X" aria-label="X"><svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M18.9 2H22l-7.3 8.3L23 22h-6.6l-5.2-6.8L5.3 22H2.2l7.8-8.9L1.5 2h6.8l4.7 6.2L18.9 2m-1.2 18h1.7L7.4 3.8H5.6L17.7 20Z"/></svg></a>
+          <a class="pd-sbtn fb" href={fbUrl} target="_blank" rel="noreferrer" title="Share on Facebook" aria-label="Facebook"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z"/></svg></a>
+          <a class="pd-sbtn mail" href={mailUrl} title="Share by email" aria-label="Email"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 4-8 5-8-5V6l8 5 8-5v2Z"/></svg></a>
+          {#if copied}<span class="pd-copied">Link copied</span>{/if}
+        </div>
 
-    <hr />
+        <!-- LIFECYCLE STRIP -->
+        <div class="lifecycle">
+          <div class="step done">
+            <span class="dot"></span><span class="step-label">PROPOSAL FILED</span>
+            <span class="step-sub">{fmt(record.created_at)}</span>
+          </div>
+          <div class="step {exempt ? 'done' : ''}">
+            <span class="dot"></span><span class="step-label">EXEMPT SOLICITATION</span>
+            <span class="step-sub">{exempt ? "Filed" : "None on record"}</span>
+          </div>
+          <div class="step {noAction ? 'done' : ''}">
+            <span class="dot"></span><span class="step-label">NO-ACTION</span>
+            <span class="step-sub">{noAction ? (noAction.notice_date ? fmt(noAction.notice_date) : "Filed") : "None on record"}</span>
+          </div>
+          <div class="step {record.proxy_status ? 'done' : ''}">
+            <span class="dot"></span><span class="step-label">EXCLUSION</span>
+            <span class="step-sub">{record.proxy_status ? statusLabel : "Not yet known"}</span>
+          </div>
+          <div class="step {record.meeting_date_known ? 'done' : ''}">
+            <span class="dot"></span><span class="step-label">{record.meeting_date_known ? "AGM DATE" : "EST. AGM DATE"}</span>
+            <span class="step-sub">{fmt(record.meeting_date)}</span>
+          </div>
+        </div>
 
-    <!-- DISCLAIMER -->
-    <div class="disclaimer">
-      THIS INFORMATION SHOULD NOT BE CONSTRUED AS INVESTMENT ADVICE OR
-      AS A SOLICITATION OF AUTHORITY TO VOTE YOUR PROXY.
+        <!-- COMPANY + SUBMITTED BY -->
+        <div class="two-col">
+          <div>
+            <h4>COMPANY</h4>
+            <div class="grid">
+              <div>Company</div><div>{record.company_name || "-"}</div>
+              <div>Registrant CIK</div><div>{record.company_cik || "-"}</div>
+              <div>Proposal Topic</div><div>{#if record.proposal_topic}<span class="topic-chip">{record.proposal_topic}</span>{:else}-{/if}</div>
+              <div>Annual Meeting</div><div>{fmt(record.meeting_date)} <span class="muted">{record.meeting_date_known ? "Confirmed" : "Estimated"}</span></div>
+            </div>
+          </div>
+          <div>
+            <h4>SUBMITTED BY</h4>
+            <div class="grid">
+              <div>Filer</div><div>{record.filer_name || "-"}</div>
+              <div>Filer CIK</div><div>{record.filer_cik || "-"}</div>
+              <div>Contact</div><div>{record.contact_name || "-"}</div>
+              <div>Email</div><div>{#if record.contact_email}<a href={`mailto:${record.contact_email}`}>{record.contact_email}</a>{:else}-{/if}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WRITTEN MATERIALS -->
+        <h3 class="wm-title">Written Materials</h3>
+        <div class="mat-tabs">
+          <button class:active={materialTab === "proposal"} onclick={() => (materialTab = "proposal")}>PROPOSAL ✓</button>
+          <button class:active={materialTab === "exempt"} onclick={() => (materialTab = "exempt")}>EXEMPT SOLICITATION {exempt ? "✓" : "—"}</button>
+          <button class:active={materialTab === "no_action"} onclick={() => (materialTab = "no_action")}>NO-ACTION {noAction ? "✓" : "—"}</button>
+        </div>
+
+        <div class="mat-box">
+          {#if materialTab === "proposal"}
+            {#if record.pdf_s3_key}<a class="pdf-link" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {record.pdf_filename || "Supporting document (PDF)"}</a>{/if}
+            {#if record.proposal_text}
+              <div class="callout"><div class="callout-label">RESOLVED CLAUSE</div>{record.proposal_text}</div>
+            {:else}<p class="muted">See the full proposal PDF above.</p>{/if}
+          {:else if materialTab === "exempt"}
+            {#if exempt}
+              <div class="grid">
+                <div>DEF 14A Link</div><div>{#if exempt.def14a_link}<a href={exempt.def14a_link} target="_blank" rel="noreferrer">{exempt.def14a_link}</a>{:else}Not provided{/if}</div>
+                <div>Item Number</div><div>{exempt.item_number || "-"}</div>
+                <div>Form Type</div><div>PX14A6G — Notice of Exempt Solicitation</div>
+              </div>
+              {#if exempt.pdf_s3_key}<a class="pdf-link" href={`/${exempt.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {exempt.pdf_filename}</a>{/if}
+            {:else}<p class="muted">No exempt solicitation on record</p>{/if}
+          {:else}
+            {#if noAction}
+              <div class="grid">
+                <div>Exclusion Basis</div>
+                <div>
+                  {#if parseBases(noAction.exclusion_basis).length}
+                    <ul class="basis-view">{#each parseBases(noAction.exclusion_basis) as b}<li>{b}</li>{/each}</ul>
+                  {:else}-{/if}
+                </div>
+                <div>Notice Date</div><div>{fmt(noAction.notice_date)}</div>
+              </div>
+              {#if noAction.company_letter_pdf_s3_key}<a class="pdf-link" href={`/${noAction.company_letter_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Company letter — {noAction.company_letter_pdf_filename}</a>{/if}
+              {#if noAction.response_pdf_s3_key}<a class="pdf-link" href={`/${noAction.response_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Proponent response — {noAction.response_pdf_filename}</a>{/if}
+            {:else}<p class="muted">No no-action filing on record</p>{/if}
+          {/if}
+        </div>
+      {/if}
     </div>
   </div>
 </div>
-<style id="oh8x4v">
-  .filing-page {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 20px;
+
+{#if isOwner}
+  <SubmitFilingModal bind:open={attachOpen} user={data.user} initialMode={attachMode} lockedProposal={record} />
+{/if}
+
+<style>
+  .basis-view { margin: 0; padding-left: 16px; }
+  .basis-view li { margin: 2px 0; }
+  .detail-page { background: #eceae4; min-height: 100vh; padding: 30px 16px; }
+  .card {
+    max-width: 680px; margin: 0 auto; background: #fbfaf7;
+    border-radius: 10px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    font-family: var(--mono, ui-monospace, monospace);
   }
-
-  p {
-    margin-bottom: 20px;
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #13294b; color: #fff; padding: 16px 20px; border-bottom: 3px solid #c8a84b;
   }
+  .card-head h3 { margin: 0; font-size: 17px; font-family: Georgia, serif; }
+  .x { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
+  .card-body { padding: 22px 24px; }
 
-  h1 {
-    margin-bottom: 30px;
+  .top { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .company { margin: 0; font-size: 22px; color: #13294b; font-family: Georgia, serif; }
+  .date { font-size: 12px; color: #777; margin: 6px 0 0; }
+  .badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; }
+  .badge.included { background: #d1fae5; color: #065f46; }
+  .badge.excluded { background: #fee2e2; color: #7f1d1d; }
+  .badge.withdrawn { background: #e5e7eb; color: #374151; }
+
+  /* social share */
+  .pd-share { display: flex; align-items: center; gap: 9px; margin: 14px 0 2px; }
+  .pd-share-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #9aa1ab; margin-right: 2px; }
+  .pd-sbtn {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #d9dce2; background: #fff; color: #5a6472;
+    cursor: pointer; text-decoration: none; padding: 0;
+    transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   }
+  .pd-sbtn:hover { transform: translateY(-2px); }
+  .pd-sbtn.copy:hover { color: #1a3a5c; border-color: #1a3a5c; }
+  .pd-sbtn.li:hover { color: #fff; background: #0a66c2; border-color: #0a66c2; }
+  .pd-sbtn.x:hover { color: #fff; background: #000; border-color: #000; }
+  .pd-sbtn.fb:hover { color: #fff; background: #1877f2; border-color: #1877f2; }
+  .pd-sbtn.mail:hover { color: #fff; background: #c8a84b; border-color: #c8a84b; }
+  .pd-copied { font-size: 11px; color: #15803d; font-weight: 600; }
 
-   /* MODAL */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4);
+  .owner-panel { border: 1px solid #d9c18f; background: #fffdf5; border-radius: 8px; padding: 12px 14px; min-width: 260px; }
+  .owner-title { font-size: 10px; letter-spacing: 0.08em; color: #8a7533; margin-bottom: 8px; }
+  .attach-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .attach-row button { background: #fff; border: 1px solid #13294b; color: #13294b; font-family: inherit; font-size: 11px; padding: 6px 8px; border-radius: 5px; cursor: pointer; }
+  .attach-row .attached { font-size: 11px; color: #15803d; align-self: center; }
+  .owner-field { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 8px; font-size: 11px; color: #555; margin-top: 6px; }
+  .owner-field select { padding: 5px 6px; border: 1px solid #ccc; border-radius: 5px; font-family: inherit; font-size: 12px; }
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal {
-    position: fixed;
-    top: 40px; /* space from top */
-    left: 50%;
-    transform: translateX(-50%);
+  .lifecycle { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 10px; padding: 14px 4px; border-top: 1px solid #e7e4dc; border-bottom: 1px solid #e7e4dc; }
+  .lifecycle .step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+  .lifecycle .step:not(:last-child)::after { content: ""; position: absolute; top: 7px; left: 50%; width: 100%; height: 2px; background: #e3e0d8; z-index: 0; }
+  .lifecycle .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c3c9d2; background: #fbfaf7; z-index: 1; margin-bottom: 6px; }
+  .lifecycle .step.done .dot { border-color: #13294b; background: #13294b; }
+  .lifecycle .step-label { font-size: 9.5px; letter-spacing: 0.02em; color: #6b7585; font-weight: 600; line-height: 1.2; }
+  .lifecycle .step-sub { font-size: 10px; color: #9aa3af; margin-top: 2px; }
 
-    width: 100%;
-    max-width: 600px;
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; margin-top: 12px; }
+  h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.04em; color: #13294b; border-bottom: 1px solid #e7e4dc; padding-bottom: 5px; }
+  .grid { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; font-size: 13px; align-items: start; }
+  .grid > div:nth-child(odd) { color: #7a8699; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; padding-top: 2px; }
+  .grid > div:nth-child(even) { color: #1f2937; word-break: break-word; overflow-wrap: anywhere; }
+  .grid a, .value a { color: #27418a; }
+  .muted { color: #9aa3af; font-size: 12px; }
+  .topic-chip { display: inline-block; background: #eef2fb; color: #27418a; font-size: 12px; padding: 2px 9px; border-radius: 4px; }
 
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  .wm-title { margin: 22px 0 10px; font-family: Georgia, serif; color: #13294b; font-size: 18px; }
+  .mat-tabs { display: flex; gap: 4px; border-bottom: 1px solid #e3e6ea; }
+  .mat-tabs button { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 12px; font-size: 11px; color: #6b7585; cursor: pointer; font-family: inherit; }
+  .mat-tabs button.active { color: #13294b; border-bottom-color: #c8a84b; font-weight: 600; }
+  .mat-box { border: 1px solid #ecece6; border-top: none; border-radius: 0 0 8px 8px; padding: 16px; background: #fff; }
 
-    max-height: 97vh; /* prevents overflow */
-    overflow-y: auto; /* scroll if content is long */
-  }
-  /* MODAL */
-  .modal {
-    width: 760px;
-    max-height: 90vh;
-    background: #f8f6f2;
-    border-radius: 8px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
+  .pdf-link { display: inline-block; background: #fde8e4; color: #b91c1c; padding: 7px 12px; border-radius: 6px; text-decoration: none; margin: 4px 0 10px; font-size: 13px; word-break: break-word; }
+  .callout { background: #eef2fb; border-left: 4px solid #27418a; padding: 12px 14px; border-radius: 4px; font-size: 14px; line-height: 1.5; }
+  .callout-label { font-size: 11px; letter-spacing: 0.04em; color: #27418a; font-weight: 700; margin-bottom: 6px; }
+  .legacy-note { font-size: 12px; color: #777; background: #f5f3ee; border-radius: 6px; padding: 10px 12px; margin-top: 14px; }
 
-  /* HEADER */
-  .modal-header {
-    background: #1f3b5b;
-    color: #fff;
-    padding: 14px 20px;
-    font-family: var(--mono);
-    font-size: 13px;
-    display: flex;
-    justify-content: flex-end;
-  }
+  .section { margin: 14px 0; }
 
-  /* BODY */
-  .modal-body {
-    padding: 24px 28px;
-    overflow-y: auto;
-  }
-
-  /* TAG */
-  .tag {
-    display: inline-block;
-    background: #e6f4ea;
-    color: #2f855a;
-    font-size: 11px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: var(--mono);
-    margin-bottom: 10px;
-  }
-
-  /* TITLE */
-  .modal-title {
-    font-size: 20px;
-    margin: 10px 0;
-    color: #1f3b5b;
-    font-weight: 600;
-  }
-
-  /* META */
-  .meta {
-    font-size: 16px;
-    color: #777;
-    margin-bottom: 15px;
-  }
-
-  /* SECTION TITLE */
-  .section-title {
-    font-size: 16px;
-    letter-spacing: 1.5px;
-    color: #777;
-    margin: 20px 0 10px;
-    font-family: var(--mono);
-  }
-
-  /* GRID */
-  .info-grid {
-    display: grid;
-    grid-template-columns: 180px 1fr;
-    row-gap: 10px;
-    column-gap: 20px;
-  }
-
-  /* LABEL */
-  .label {
-    font-size: 15px;
-    color: #888;
-    font-family: var(--mono);
-    letter-spacing: 1px;
-  }
-
-  /* VALUE */
-  .value {
-    font-size: 15px;
-    color: #222;
-  }
-
-  /* LINK */
-  .value a {
-    color: #2b6cb0;
-    text-decoration: none;
-  }
-
-  /* FILE */
-  .file-box {
-    background: #fde8e4;
-    padding: 10px 12px;
-    border-radius: 6px;
-    display: inline-block;
-    font-size: 13px;
-    margin: 10px 0;
-  }
-
-  /* DESCRIPTION */
-  .desc {
-    font-size: 13px;
-    line-height: 1.6;
-    color: #333;
-  }
-
-  /* DISCLAIMER */
-  .disclaimer {
-    margin-top: 20px;
-    border: 1px solid #e6d8a8;
-    background: #fffbea;
-    padding: 12px;
-    font-size: 11px;
-    color: #6b5e2e;
-    border-radius: 4px;
-    font-family: var(--mono);
-  }
-  .modal-body {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-  }
-
-  th {
-    cursor: pointer;
-    user-select: none;
+  @media (max-width: 560px) {
+    .two-col { grid-template-columns: 1fr; }
+    .lifecycle { overflow-x: auto; }
   }
 </style>

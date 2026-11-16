@@ -1,5 +1,8 @@
 <script>
   import "../app.css";
+  import SubmitFilingModal from "$lib/SubmitFilingModal.svelte";
+
+  let showSubmit = $state(false);
 
   //   let { data } = $props();
   // // let user = $state(data. User);
@@ -98,7 +101,7 @@
       <a href="/about">About</a>
 
       {#if data.user}
-        <a href="/dashboard">Submit Exempt Solicitation</a>
+        <button class="btn-link" onclick={() => (showSubmit = true)}>Submit Filing</button>
 
         <button class="btn-logout" onclick={logout}> Logout </button>
       {:else}
@@ -112,33 +115,20 @@
 <!-- SUBMIT BAR -->
 <div class="submit-bar">
   <div class="container submit-bar-inner">
-    <a href="/login">
-      <button class="btn-cta">Submit Exempt Solicitation →</button>
-    </a>
-  
-
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdP-3Ui9cAX_GkrbWAvAIleA0PV6s38GYP7C5kTZYpXjGY45A/viewform"
-          target="_blank"
-          rel="noopener noreferrer">
-      <button class="btn-cta">Submit A Proposal (Beta) →</button>
-    </a>
-
-
-    <!-- <div class="submit-bar-text">
-        Want to publish a resolution?
-        <a
-          href="https://docs.google.com/forms/d/e/1FAIpQLSdP-3Ui9cAX_GkrbWAvAIleA0PV6s38GYP7C5kTZYpXjGY45A/viewform"
-          target="_blank"
-          rel="noopener noreferrer"
-          >
-          Click here.
-          </a>
-     </div> -->
-
+    {#if data.user}
+      <button class="btn-cta" onclick={() => (showSubmit = true)}>Submit a Filing →</button>
+    {:else}
+      <a href="/login"><button class="btn-cta">Submit a Filing →</button></a>
+    {/if}
+    <div class="submit-bar-text">Submit a new shareholder proposal or attach documents to an existing one.</div>
   </div>
 </div>
 
 <slot />
+
+{#if data.user}
+  <SubmitFilingModal bind:open={showSubmit} user={data.user} />
+{/if}
 
 <!-- FOOTER -->
 <footer>
@@ -208,3 +198,22 @@
     </div>
   </div>
 </footer>
+
+<style>
+  /* Match the other nav links (.header-nav a) exactly */
+  .btn-link {
+    color: rgba(255, 255, 255, 0.85);
+    background: none;
+    border: none;
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+  }
+  .btn-link:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+</style>

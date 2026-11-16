@@ -881,7 +881,10 @@
     overflow-wrap: anywhere;
     hyphens: auto;
   }
-  .filing-table td { padding: 10px 8px; vertical-align: middle; }
+  /* !important beats the global app.css ".filing-table td{vertical-align:top}"
+     (Svelte scopes with :where() = 0 specificity, so it can't win on its own).
+     Centers every admin row's content incl. the action buttons in tall rows. */
+  .filing-table td { padding: 10px 8px; vertical-align: middle !important; }
 
   td {
     padding: 10px 8px;

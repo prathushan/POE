@@ -477,20 +477,19 @@ footer ul a:hover{color:var(--gold);}
   color: var(--g4);
 }
 
-/* BUTTON */
+/* BUTTON — matches the admin pagination (.pg-btn): navy-outline pill */
 .pagination-btn {
   font-family: var(--mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 13px;
+  font-weight: 600;
 
-  padding: 8px 14px;
+  padding: 7px 14px;
 
-  border: 1px solid var(--g2);
+  border: 1px solid var(--blue);
   background: #fff;
-  color: var(--g5);
+  color: var(--blue);
 
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
 
   transition: all 0.2s ease;

@@ -944,14 +944,18 @@
   }
 
   /* ACTIONS — icon buttons (single horizontal row) */
+  /* NOTE: .actions IS the <td>. Keep it a normal table-cell (do NOT make it
+     display:flex — that pulls it out of the row and pins the buttons to the top).
+     vertical-align:middle (from .filing-table td) then centers the inline-flex
+     buttons vertically, even when the Company name wraps to multiple lines. */
   .actions {
-    display: flex;
-    gap: 5px;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-items: center;
+    white-space: nowrap;
+    text-align: left;
+    font-size: 0; /* collapse inline whitespace between the icon buttons */
   }
+  .actions .icon + .icon { margin-left: 5px; }
   .actions .icon {
+    vertical-align: middle;
     width: 28px;
     height: 28px;
     flex: 0 0 auto;

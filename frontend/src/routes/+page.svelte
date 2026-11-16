@@ -215,10 +215,9 @@
       {#if filings.length === 0}
         Showing 0 filings
       {:else}
-        Showing {(currentPage - 1) * pageSize + 1}
+        Showing {Math.min((currentPage - 1) * pageSize + 1, filteredFilings.length)}
         –
-        {Math.min(currentPage * pageSize, filings.length)}
-        <!-- of {filings.length} filings -->
+        {Math.min(currentPage * pageSize, filteredFilings.length)}
         of {filteredFilings.length} filings
       {/if}
     </p>

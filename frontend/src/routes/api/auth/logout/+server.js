@@ -9,10 +9,17 @@
 import { json } from '@sveltejs/kit';
  
 export const POST = async ({ cookies }) => {
+  // Must match the attributes the login cookie was set with (secure:false,
+  // httpOnly, sameSite:strict, path:/). Without secure:false, SvelteKit defaults
+  // the clear-cookie to Secure, which browsers reject over HTTP (staging) — so the
+  // cookie never cleared and the user stayed "logged in".
   cookies.set('user', '', {
     path: '/',
-    expires: new Date(0) // 🔥 THIS IS IMPORTANT
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: false,
+    expires: new Date(0)
   });
- 
+
   return json({ success: true });
 };

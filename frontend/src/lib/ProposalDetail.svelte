@@ -13,8 +13,12 @@
 
   // ── social share ──
   let copied = $state(false);
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://proxyopenexchange.org";
-  const shareUrl = $derived(record ? `${origin}/filing/${record.id}` : "");
+  // Always share the canonical PRODUCTION url. LinkedIn/Facebook/X build the
+  // preview card by crawling the shared url, and they can't reach a private
+  // staging host — so sharing the public prod url makes the preview work from
+  // any environment (staging filings are copies of prod with the same ids).
+  const CANONICAL = "https://proxyopenexchange.org";
+  const shareUrl = $derived(record ? `${CANONICAL}/filing/${record.id}` : "");
   const shareTitle = $derived(record ? `${record.company_name || record.subject || "Shareholder Proposal"} — Proxy Open Exchange` : "");
   const liUrl = $derived(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`);
   const xUrl = $derived(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`);

@@ -54,8 +54,9 @@
 
   // ── social share ──
   let copied = $state(false);
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://proxyopenexchange.org";
-  const shareUrl = record ? `${origin}/filing/${record.id}` : "";
+  // Share the canonical PRODUCTION url (see CANONICAL above) so LinkedIn/FB/X
+  // can crawl it for the preview card, even when shared from staging.
+  const shareUrl = record ? `${CANONICAL}/filing/${record.id}` : "";
   const shareTitle = record ? `${record.company_name || record.subject || "Shareholder Proposal"} — Proxy Open Exchange` : "";
   const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
   const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`;

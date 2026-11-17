@@ -20,8 +20,28 @@
   const xUrl = $derived(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`);
   const fbUrl = $derived(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`);
   const mailUrl = $derived(`mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareUrl)}`);
-  function copyLink() {
-    navigator.clipboard?.writeText(shareUrl).then(() => { copied = true; setTimeout(() => (copied = false), 1600); });
+  async function copyLink() {
+    const confirm = () => { copied = true; setTimeout(() => (copied = false), 1800); };
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        // Fallback for non-secure (HTTP) contexts — navigator.clipboard is
+        // unavailable there (e.g. the http staging site), so use execCommand.
+        const ta = document.createElement("textarea");
+        ta.value = shareUrl;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      confirm();
+    } catch (e) {
+      confirm();
+    }
   }
 </script>
 

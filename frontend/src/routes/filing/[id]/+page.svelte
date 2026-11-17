@@ -7,6 +7,17 @@
   const user = data.user;
   const isOwner = !!(user && record && user.id === record.filer_user_id);
 
+  // ── social share preview (OpenGraph / Twitter) ──
+  // Canonical public site so crawlers (LinkedIn/Facebook/X) always get a
+  // valid, publicly-fetchable absolute URL + image, regardless of environment.
+  const CANONICAL = "https://proxyopenexchange.org";
+  const ogTitle = (record?.company_name || record?.subject || "Shareholder Proposal") + " — Proxy Open Exchange";
+  const ogDesc = record
+    ? `${record.proposal_topic || record.subject || "Shareholder proxy filing"} · Filed on Proxy Open Exchange under SEC Rule 14a-8.`
+    : "Shareholder proxy filings on Proxy Open Exchange.";
+  const ogUrl = record ? `${CANONICAL}/filing/${record.id}` : CANONICAL;
+  const ogImage = `${CANONICAL}/poe-share-image.png`;
+
   let materialTab = $state("proposal");
   let attachOpen = $state(false);
   let attachMode = $state("");
@@ -50,15 +61,44 @@
   const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`;
   const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
   const mailUrl = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareUrl)}`;
-  function copyLink() {
-    navigator.clipboard?.writeText(shareUrl).then(() => { copied = true; setTimeout(() => (copied = false), 1600); });
+  async function copyLink() {
+    const confirm = () => { copied = true; setTimeout(() => (copied = false), 1800); };
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        // Fallback for non-secure (HTTP) contexts where navigator.clipboard is unavailable.
+        const ta = document.createElement("textarea");
+        ta.value = shareUrl;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      confirm();
+    } catch (e) {
+      confirm();
+    }
   }
 </script>
 
 <svelte:head>
-  <title>{record?.company_name || record?.subject || "Filing"} — POE</title>
-  <meta property="og:title" content={record?.company_name || record?.subject} />
-  <meta property="og:type" content="website" />
+  <title>{ogTitle}</title>
+  <meta name="description" content={ogDesc} />
+  <meta property="og:site_name" content="Proxy Open Exchange" />
+  <meta property="og:title" content={ogTitle} />
+  <meta property="og:description" content={ogDesc} />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content={ogUrl} />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:image:alt" content="Proxy Open Exchange" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={ogTitle} />
+  <meta name="twitter:description" content={ogDesc} />
+  <meta name="twitter:image" content={ogImage} />
 </svelte:head>
 
 <div class="detail-page">

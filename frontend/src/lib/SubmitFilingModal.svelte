@@ -29,8 +29,36 @@
   let registrant_cik = $state("");
   let proposal_topic = $state("");
   let proposal_topic_other = $state("");
-  let meeting_date = $state("");
+  let meeting_date = $state("");        // canonical yyyy-mm-dd (sent to the backend)
+  let meetingDateInput = $state("");    // what the user sees/types: mm/dd/yyyy
   let meeting_date_known = $state(false);
+
+  // Date helpers — the field shows US mm/dd/yyyy regardless of browser locale.
+  function isoToMdy(iso) {
+    if (!iso) return "";
+    const [y, m, d] = String(iso).slice(0, 10).split("-");
+    return y && m && d ? `${m}/${d}/${y}` : "";
+  }
+  function mdyToIso(mdy) {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((mdy || "").trim());
+    if (!m) return "";
+    const [, mm, dd, yyyy] = m;
+    if (+mm < 1 || +mm > 12 || +dd < 1 || +dd > 31) return "";
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  // Auto-insert slashes as the user types: "05242027" -> "05/24/2027".
+  function formatMdy(raw) {
+    let v = (raw || "").replace(/[^\d]/g, "").slice(0, 8);
+    if (v.length >= 5) v = v.slice(0, 2) + "/" + v.slice(2, 4) + "/" + v.slice(4);
+    else if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
+    return v;
+  }
+  // Open the native calendar picker for a mm/dd/yyyy field (icon click).
+  function openDatePicker(e) {
+    const native = e.currentTarget.closest(".date-field")?.querySelector('input[type="date"]');
+    if (!native) return;
+    try { native.showPicker(); } catch { native.focus(); }
+  }
   let proposal_text = $state("");
   let proxy_status = $state("");
 
@@ -66,6 +94,7 @@
     registrant_cik = c.company_cik || "";
     if (c.meeting_date) {
       meeting_date = suggestAgm(c.meeting_date);
+      meetingDateInput = isoToMdy(meeting_date);
       meeting_date_known = false;
     }
     edgarResults = [];
@@ -109,19 +138,22 @@
   // ── No-action ──
   let exclusion_bases = $state([]);
   let basisDdOpen = $state(false); // multi-select exclusion-basis dropdown open/closed
+  let proposalDdOpen = $state(false); // "select your proposal" / "edit" search dropdown open/closed
   function toggleBasis(b) {
     exclusion_bases = exclusion_bases.includes(b)
       ? exclusion_bases.filter((x) => x !== b)
       : [...exclusion_bases, b];
   }
-  let notice_date = $state("");
+  let notice_date = $state("");         // canonical yyyy-mm-dd
+  let noticeDateInput = $state("");     // shown as mm/dd/yyyy
 
   // ── Exempt / standalone ──
   let def14a_link = $state("");
   let item_number = $state("");
   let voluntary_5m = $state(false);
   // round-2 §6: optionally confirm the proposal's AGM date from the exempt form
-  let exempt_agm_date = $state("");
+  let exempt_agm_date = $state("");     // canonical yyyy-mm-dd
+  let exemptAgmInput = $state("");      // shown as mm/dd/yyyy
 
   // ── Standalone (legacy) extra ──
   let std_company = $state("");
@@ -199,17 +231,19 @@
     proposal_topic_other = known ? "" : (p.proposal_topic ?? "");
     proposal_text = p.proposal_text ?? "";
     meeting_date = p.meeting_date ? String(p.meeting_date).slice(0, 10) : "";
+    meetingDateInput = isoToMdy(meeting_date);
     meeting_date_known = !!p.meeting_date_known;
     proxy_status = p.proxy_status ?? "";
     primary_file = null; // keep existing PDF unless they upload a new one
+    proposalDdOpen = false; // close the search dropdown after picking
   }
 
   function resetFields() {
     company_name = registrant_cik = proposal_topic = proposal_topic_other = "";
-    meeting_date = ""; meeting_date_known = false; proposal_text = ""; proxy_status = "";
-    parent_proposal_id = ""; proposalSearch = ""; edit_id = "";
-    exclusion_bases = []; notice_date = ""; basisDdOpen = false;
-    def14a_link = ""; item_number = ""; voluntary_5m = false; exempt_agm_date = "";
+    meeting_date = ""; meetingDateInput = ""; meeting_date_known = false; proposal_text = ""; proxy_status = "";
+    parent_proposal_id = ""; proposalSearch = ""; edit_id = ""; proposalDdOpen = false;
+    exclusion_bases = []; notice_date = ""; noticeDateInput = ""; basisDdOpen = false;
+    def14a_link = ""; item_number = ""; voluntary_5m = false; exempt_agm_date = ""; exemptAgmInput = "";
     std_company = ""; std_topic = ""; std_contact = ""; std_5m_ack = false;
     primary_file = null; second_file = null; certify = false;
     proxyPreviewInterest = false;
@@ -225,6 +259,7 @@
   function pickProposal(p) {
     parent_proposal_id = p.id;
     proposalSearch = `${p.company_name} — ${p.proposal_topic ?? ""}`;
+    proposalDdOpen = false; // close the search dropdown after picking
   }
 
   // Proxy Preview 2027 contribution link. As You Sow will supply the destination
@@ -411,24 +446,31 @@
             <div class="form-section-body">
               <div class="form-row">
                 <label>Your Submitted Proposals <span class="req">*</span></label>
-                <input bind:value={proposalSearch} oninput={() => (edit_id = "")} placeholder="Type to search your proposals..." />
+                <div class="proposal-selector">
+                  <input bind:value={proposalSearch} onfocus={() => (proposalDdOpen = true)}
+                         oninput={() => { edit_id = ""; proposalDdOpen = true; }}
+                         placeholder="Type to search your proposals..." autocomplete="off" />
+                  {#if proposalDdOpen}
+                    <div class="ms-backdrop" onclick={() => (proposalDdOpen = false)} role="presentation"></div>
+                    {#if myProposals.length === 0}
+                      <div class="proposal-dropdown"><div class="pd-empty">You haven't submitted any proposals yet.</div></div>
+                    {:else if filteredProposals.length === 0}
+                      <div class="proposal-dropdown"><div class="pd-empty">No proposals match your search.</div></div>
+                    {:else}
+                      <div class="proposal-dropdown">
+                        {#each filteredProposals as p}
+                          <button type="button" class="prop-item" onclick={() => pickForEdit(p)}>
+                            <strong>{p.company_name}</strong>
+                            <small>{p.proposal_topic ?? "—"}{#if p.status} · {p.status}{/if}{#if p.created_at} · Filed {fmtDate(p.created_at)}{/if}</small>
+                          </button>
+                        {/each}
+                      </div>
+                    {/if}
+                  {/if}
+                </div>
                 <div class="helper">Shows every proposal you've submitted (any status). Select one to load its details below, edit, and save.</div>
-
                 {#if edit_id}
                   <p class="selected-note">✓ Editing: {proposalSearch}</p>
-                {:else if myProposals.length === 0}
-                  <div class="helper muted">You haven't submitted any proposals yet.</div>
-                {:else if filteredProposals.length === 0}
-                  <div class="helper muted">No proposals match your search.</div>
-                {:else}
-                  <div class="proposal-list">
-                    {#each filteredProposals as p}
-                      <button type="button" class="prop-item" onclick={() => pickForEdit(p)}>
-                        <strong>{p.company_name}</strong>
-                        <small>{p.proposal_topic ?? "—"}{#if p.status} · {p.status}{/if}{#if p.created_at} · Filed {fmtDate(p.created_at)}{/if}</small>
-                      </button>
-                    {/each}
-                  </div>
                 {/if}
               </div>
             </div>
@@ -502,7 +544,9 @@
                 </div>
                 <div class="form-row">
                   <label>Annual Meeting Date</label>
-                  <input type="date" bind:value={meeting_date} />
+                  {@render dateField(meetingDateInput, meeting_date,
+                    (v) => { meetingDateInput = formatMdy(v); meeting_date = mdyToIso(meetingDateInput); },
+                    (iso) => { meeting_date = iso; meetingDateInput = isoToMdy(iso); })}
                   <div class="date-kind">
                     <label><input type="radio" value={false} bind:group={meeting_date_known} /> Estimated</label>
                     <label><input type="radio" value={true} bind:group={meeting_date_known} /> Known (confirmed)</label>
@@ -584,7 +628,9 @@
 
                 <div class="form-row">
                   <label>No-Action Notice Date <span class="optional">(optional)</span></label>
-                  <input type="date" bind:value={notice_date} />
+                  {@render dateField(noticeDateInput, notice_date,
+                    (v) => { noticeDateInput = formatMdy(v); notice_date = mdyToIso(noticeDateInput); },
+                    (iso) => { notice_date = iso; noticeDateInput = isoToMdy(iso); })}
                 </div>
               </div>
 
@@ -626,10 +672,14 @@
                 </div>
               </div>
 
-              <div class="form-row">
-                <label>Annual Meeting Date <span class="optional">(update — now Known / confirmed)</span></label>
-                <input type="date" bind:value={exempt_agm_date} />
-                <div class="helper">By this stage the AGM is usually confirmed. Setting a date here updates the linked proposal's meeting date to <strong>Known (confirmed)</strong>. Leave blank to keep it unchanged.</div>
+              <div class="form-grid">
+                <div class="form-row">
+                  <label>Annual Meeting Date</label>
+                  {@render dateField(exemptAgmInput, exempt_agm_date,
+                    (v) => { exemptAgmInput = formatMdy(v); exempt_agm_date = mdyToIso(exemptAgmInput); },
+                    (iso) => { exempt_agm_date = iso; exemptAgmInput = isoToMdy(iso); })}
+                </div>
+                <div></div>
               </div>
 
               <div class="form-row">
@@ -742,13 +792,15 @@
           </div>
         {/if}
 
-        <!-- ACTIONS (always shown, matching the prototype) -->
-        <div class="form-actions">
-          <button class="btn-cancel" onclick={close}>Cancel</button>
-          <button class="btn-primary" onclick={submitFiling} disabled={submitting || !mode || (mode === "edit" && !edit_id)}>
-            {submitting ? (mode === "edit" ? "Saving…" : "Submitting…") : (mode === "edit" ? "Save Changes" : "Submit Filing")}
-          </button>
-        </div>
+        <!-- ACTIONS (only once a submission mode is chosen) -->
+        {#if mode}
+          <div class="form-actions">
+            <button class="btn-cancel" onclick={close}>Cancel</button>
+            <button class="btn-primary" onclick={submitFiling} disabled={submitting || (mode === "edit" && !edit_id)}>
+              {submitting ? (mode === "edit" ? "Saving…" : "Submitting…") : (mode === "edit" ? "Save Changes" : "Submit Filing")}
+            </button>
+          </div>
+        {/if}
       </div>
     </div>
   </div>
@@ -761,13 +813,9 @@
       <div class="check-icon">✓</div>
       <h3>{successHeadline}</h3>
       <div class="confirm-msg">
-        {#if successKind === "no_action"}
-          <p>Your <strong>no-action / exclusion notice has been submitted</strong> and is now live on the proposal.</p>
-          <p class="cm-line"><span class="cm-dot">●</span> <strong>Be sure to return to update your resolution</strong> once you know if it has been included, excluded, or withdrawn on the proxy statement.</p>
-        {:else if successKind === "exempt"}
-          <p>Your <strong>exempt solicitation has been submitted</strong> and is now live on the proposal.</p>
-          <p class="cm-line"><span class="cm-dot">●</span> <strong>Be sure to return to update your resolution</strong> once you know if it has been included, excluded, or withdrawn on the proxy statement.</p>
-        {:else if successKind === "standalone"}
+        <!-- Scope §4: no-action & exempt reuse the SAME popup body as the proposal
+             success popup — only the headline changes per type. -->
+        {#if successKind === "standalone"}
           <p>Your <strong>exempt solicitation has been submitted</strong> and is pending admin review.</p>
         {:else}
           <p><strong>Your shareholder proposal has been submitted</strong> and is pending admin review.</p>
@@ -779,30 +827,49 @@
   </div>
 {/if}
 
+{#snippet dateField(displayValue, isoValue, setFromText, setFromNative)}
+  <div class="date-field">
+    <input type="text" inputmode="numeric" placeholder="mm/dd/yyyy" maxlength="10"
+           value={displayValue} oninput={(e) => setFromText(e.target.value)} />
+    <input type="date" class="date-native" tabindex="-1" aria-hidden="true"
+           value={isoValue} onchange={(e) => setFromNative(e.target.value)} />
+    <button type="button" class="date-btn" onclick={openDatePicker} aria-label="Open calendar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </button>
+  </div>
+{/snippet}
+
 {#snippet linkToProposal()}
   <div class="form-section">
     <div class="form-section-title">Link to Proposal</div>
     <div class="form-section-body">
       <div class="form-row">
         <label>Select Your Proposal <span class="req">*</span></label>
-        <input bind:value={proposalSearch} oninput={() => (parent_proposal_id = "")} placeholder="Type to search your proposals..." />
+        <div class="proposal-selector">
+          <input bind:value={proposalSearch} onfocus={() => (proposalDdOpen = true)}
+                 oninput={() => { parent_proposal_id = ""; proposalDdOpen = true; }}
+                 placeholder="Type to search your proposals..." autocomplete="off" />
+          {#if proposalDdOpen}
+            <div class="ms-backdrop" onclick={() => (proposalDdOpen = false)} role="presentation"></div>
+            {#if myProposals.length === 0}
+              <div class="proposal-dropdown"><div class="pd-empty">No approved proposals found on your account yet.</div></div>
+            {:else if filteredProposals.length === 0}
+              <div class="proposal-dropdown"><div class="pd-empty">No proposals match your search.</div></div>
+            {:else}
+              <div class="proposal-dropdown">
+                {#each filteredProposals as p}
+                  <button type="button" class="prop-item" onclick={() => pickProposal(p)}>
+                    <strong>{p.company_name}</strong>
+                    <small>{p.proposal_topic ?? "—"}{#if p.created_at} · Filed {fmtDate(p.created_at)}{/if}</small>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          {/if}
+        </div>
         <div class="helper">Only shows your own approved proposals. Search by company name or topic.</div>
-
         {#if parent_proposal_id}
           <p class="selected-note">✓ Selected: {proposalSearch}</p>
-        {:else if myProposals.length === 0}
-          <div class="helper muted">No approved proposals found on your account yet. A proposal must be approved before you can attach to it.</div>
-        {:else if filteredProposals.length === 0}
-          <div class="helper muted">No proposals match your search.</div>
-        {:else}
-          <div class="proposal-list">
-            {#each filteredProposals as p}
-              <button type="button" class="prop-item" onclick={() => pickProposal(p)}>
-                <strong>{p.company_name}</strong>
-                <small>{p.proposal_topic ?? "—"}{#if p.created_at} · Filed {fmtDate(p.created_at)}{/if}</small>
-              </button>
-            {/each}
-          </div>
         {/if}
       </div>
 
@@ -827,12 +894,12 @@
 {/snippet}
 
 <style>
-  /* The submit modal follows the prototype at 780px; shell + form skeleton
+  /* The submit modal follows the prototype at 820px (inline override in the artifact); shell + form skeleton
      (.modal-overlay/.modal/.modal-header/.form-section/.form-row/.form-grid/
      .btn-cancel/.btn-primary/.file-upload-zone/.checkbox-row/.date-kind/
      .proposal-selector/.proposal-dropdown/.inherited-field) come from app.css
      so they match the design system exactly. Only the extras live here. */
-  .submit-modal { max-width: 780px; }
+  .submit-modal { max-width: 820px; }
   /* No divider line above the footer buttons (client preference) */
   .submit-modal .form-actions { border-top: none; padding-top: 0; }
 
@@ -850,20 +917,6 @@
   input[readonly] { background: var(--paper-warm); color: var(--g5); }
   input[readonly]:focus { box-shadow: none; border-color: var(--g2); }
 
-  /* inline proposal results list (reuses prototype .prop-item look) */
-  .proposal-list {
-    margin: 10px 0 0; border: 1px solid var(--g2); border-radius: 4px;
-    max-height: 180px; overflow-y: auto; background: #fff;
-  }
-  .proposal-list .prop-item {
-    display: block; width: 100%; text-align: left; cursor: pointer;
-    padding: 10px 14px; font-size: 13px; font-family: var(--sans);
-    background: none; border: none; border-bottom: 1px solid var(--g1);
-  }
-  .proposal-list .prop-item:last-child { border-bottom: none; }
-  .proposal-list .prop-item:hover { background: var(--paper); }
-  .proposal-list .prop-item strong { color: var(--blue); display: block; margin-bottom: 2px; }
-  .proposal-list .prop-item small { color: var(--g4); font-family: var(--mono); font-size: 11px; }
 
   /* no-action exclusion-basis — multi-select dropdown (looks like a select, picks many) */
   .multiselect { position: relative; }
@@ -877,6 +930,25 @@
   .ms-placeholder { color: var(--g3); }
   .ms-caret { color: var(--g4); font-size: 12px; flex: 0 0 auto; }
   .ms-backdrop { position: fixed; inset: 0; z-index: 40; }
+  /* mm/dd/yyyy text field + calendar-picker button */
+  .date-field { position: relative; display: block; }
+  .date-field > input[type="text"] { width: 100%; padding-right: 42px; }
+  /* Tiny anchor on the LEFT edge so the native picker drops down INSIDE the modal
+     (anchoring it to the right edge made the picker spill outside the popup). */
+  .date-field .date-native {
+    position: absolute; left: 10px; bottom: 4px; width: 1px; height: 1px;
+    opacity: 0; border: 0; padding: 0; margin: 0; pointer-events: none;
+  }
+  .date-field .date-btn {
+    position: absolute; right: 1px; top: 1px; bottom: 1px; width: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; border-left: 1px solid var(--g1);
+    color: var(--g4); cursor: pointer; border-radius: 0 4px 4px 0;
+  }
+  .date-field .date-btn:hover { color: var(--blue); background: var(--paper-warm); }
+  /* lift the search dropdown above the click-away backdrop so its items stay clickable */
+  .proposal-selector .proposal-dropdown { z-index: 50; }
+  .pd-empty { padding: 12px 14px; font-size: 13px; color: var(--g4); font-family: var(--sans); }
   .ms-panel {
     position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
     background: #fff; border: 1.5px solid var(--blue-light); border-radius: 4px;

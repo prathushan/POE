@@ -341,7 +341,7 @@
   .owner-field { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 8px; font-size: 11px; color: #555; margin-top: 6px; }
   .owner-field select { padding: 5px 6px; border: 1px solid #ccc; border-radius: 5px; font-family: inherit; font-size: 12px; }
 
-  .lifecycle { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 10px; padding: 14px 4px; border-top: 1px solid #e7e4dc; border-bottom: 1px solid #e7e4dc; }
+  .lifecycle { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 10px; padding: 14px 4px; }
   .lifecycle .step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
   .lifecycle .step:not(:last-child)::after { content: ""; position: absolute; top: 7px; left: 50%; width: 100%; height: 2px; background: #e3e0d8; z-index: 0; }
   .lifecycle .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c3c9d2; background: #fbfaf7; z-index: 1; margin-bottom: 6px; }

@@ -483,7 +483,13 @@
       <div class="modal">
         <!-- HEADER -->
         <div class="modal-header">
-          <!-- <h3>Review: {selectedFiling.accession_number}</h3> -->
+          <h3>
+            {#if selectedFiling.filing_type === "exempt_solicitation" && !selectedFiling.proposal_id}
+              Exempt Solicitation — {selectedFiling.subject || "-"}
+            {:else}
+              {selectedFiling.company_name || "-"} — Shareholder Proposal
+            {/if}
+          </h3>
           <button class="modal-x" on:click={closeModal} aria-label="Close">×</button>
         </div>
 
@@ -529,7 +535,7 @@
             {@const es = filings.find((x) => x.proposal_id === pv.id && x.filing_type === "exempt_solicitation" && x.status !== "deleted")}
             {@const na = filings.find((x) => x.proposal_id === pv.id && x.filing_type === "no_action" && x.status !== "deleted")}
 
-            <h2 class="main-title">{pv.company_name || "-"} — Shareholder Proposal</h2>
+            <h2 class="main-title">{pv.company_name || "-"}</h2>
             <p class="date">Filed {fmtDate(pv.created_at)} · Filer: {pv.filer_name || "-"}</p>
 
             <div class="lifecycle">
@@ -777,9 +783,6 @@
     gap: 20px;
     margin-bottom: 30px;
   }
-  .s-8yXO12Wbi8z8 {
-    font-family: "IBM Plex Mono", "Courier New", monospace !important;
-  }
   .stat-card {
     flex: 1;
     background: #fff;
@@ -811,6 +814,7 @@
   }
 
   .label {
+    font-family: var(--mono);
     font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -890,7 +894,7 @@
   td {
     padding: 10px 8px;
     border-top: 1px solid #eee;
-    font-size: 13px;
+    font-size: 14px; /* match the home listing table */
     vertical-align: middle;
     word-break: break-word;
     overflow-wrap: anywhere;
@@ -999,6 +1003,7 @@
     justify-content: center;
     padding: 60px 20px 24px; /* room on the sides so the wider modal never touches the edge */
     z-index: 999;
+    overflow-y: auto; /* the whole modal flows and scrolls here, like the artifact */
   }
 
   .modal {
@@ -1016,10 +1021,21 @@
   .modal-header {
     background: var(--blue);
     color: #fff;
-    padding: 18px 24px;
+    padding: 18px 26px;
     display: flex;
-    justify-content: flex-end;
-    border-bottom: 2px solid var(--gold);
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 3px solid var(--gold);
+  }
+  /* title in the header — matches the public proposal popup (.pd-head h3) */
+  .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-family: Georgia, "Times New Roman", serif !important;
+    font-weight: 400;
+    line-height: 1.25;
+    color: #fff;
   }
   /* match the home proposal popup's close button (.pd-x) */
   .modal-x {
@@ -1073,11 +1089,8 @@
   .empty-row { text-align: center; color: #9aa3af; padding: 26px; font-size: 14px; }
 
   .modal-body {
-    padding: 20px;
-    overflow-y: auto; /* 🔥 scroll inside */
-    flex: 1;
-
-    /* 🔥 ADD THESE */
+    padding: 28px;
+    /* no inner scroll — the overlay scrolls the whole modal (matches the artifact) */
     overflow-x: hidden; /* prevent horizontal scroll */
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -1208,29 +1221,34 @@
     border-radius: 6px;
   }
 
+  /* matches the public proposal popup (.pd-company) */
   .main-title {
-    font-size: 20px;
-    margin-top: 10px;
+    margin: 0 0 6px;
+    font-size: 25px;
+    color: #1a3a5c;
+    font-family: Georgia, "Times New Roman", serif !important;
+    font-weight: 400;
   }
 
   .date {
     font-size: 12px;
     color: #777;
+    margin: 0 0 6px;
   }
 
-  /* GRID LIKE YOUR SCREENSHOT */
+  /* matches the public proposal popup (.pd-grid) */
   .grid {
     display: grid;
-    grid-template-columns: 170px 1fr;
-    gap: 10px 20px;
-    font-size: 14px !important;
+    grid-template-columns: 130px 1fr;
+    gap: 11px 16px;
+    font-size: 13.5px;
     align-items: start;
   }
   .grid > div:nth-child(odd) {
     color: #7a8699;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     padding-top: 2px;
   }
   .grid > div:nth-child(even) {
@@ -1257,15 +1275,13 @@
     margin-bottom: 6px;
   }
 
-  /* LIFECYCLE STRIP */
+  /* LIFECYCLE STRIP — matches the public proposal popup (.pd-life): no divider lines */
   .lifecycle {
     display: flex;
     justify-content: space-between;
     gap: 6px;
-    margin: 18px 0 8px;
-    padding: 14px 4px;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
+    margin: 20px 0 18px;
+    padding: 18px 6px;
   }
   .lifecycle .step {
     flex: 1;
@@ -1298,26 +1314,35 @@
   .lifecycle .step-label { font-size: 9.5px; letter-spacing: 0.02em; color: #6b7585; font-weight: 600; line-height: 1.2; }
   .lifecycle .step-sub { font-size: 10px; color: #9aa3af; margin-top: 2px; }
 
-  /* TWO-COLUMN BLOCKS */
+  /* section headers — match the public proposal popup (pd h4) */
+  .modal-body h4 {
+    margin: 0 0 12px;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: #1a3a5c;
+    border-bottom: 1px solid #e7e4dc;
+    padding-bottom: 7px;
+  }
+
+  /* TWO-COLUMN BLOCKS — matches .pd-two */
   .two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 18px 28px;
-    margin-top: 14px;
+    gap: 24px 52px;
+    margin-top: 16px;
   }
-  .two-col h4 { margin: 0 0 8px; }
-  .two-col .grid { grid-template-columns: 120px 1fr; gap: 8px 12px; }
 
-  /* MATERIAL TABS */
-  .wm-head {
-    font-family: Georgia, "Times New Roman", serif;
+  /* MATERIAL TABS — matches .pd-wm / .pd-tabs */
+  .modal-body .wm-head {
+    font-family: Georgia, "Times New Roman", serif !important;
     font-size: 18px; color: #1a3a5c; text-transform: none;
-    letter-spacing: 0; margin: 4px 0 2px;
+    letter-spacing: 0; margin: 26px 0 12px;
+    border-bottom: none; padding-bottom: 0; font-weight: 400;
   }
-  .mat-tabs { display: flex; gap: 4px; border-bottom: 1px solid #e3e6ea; margin: 8px 0 0; }
+  .mat-tabs { display: flex; gap: 4px; border-bottom: 1px solid #e3e6ea; margin: 0; }
   .mat-tabs button {
     background: none; border: none; border-bottom: 2px solid transparent;
-    padding: 8px 12px; font-size: 11px; letter-spacing: 0.02em; color: #6b7585;
+    padding: 10px 14px; font-size: 11.5px; letter-spacing: 0.02em; color: #6b7585;
     cursor: pointer; font-family: var(--mono, monospace);
   }
   .mat-tabs button.active { color: #1a3a5c; border-bottom-color: #c9a84c; font-weight: 600; }

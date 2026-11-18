@@ -14,7 +14,7 @@ export const GET = async ({ locals, url }) => {
   try {
     const result = await pool.query(
       `SELECT id, company_name, company_cik, proposal_topic, proposal_text,
-              meeting_date, meeting_date_known, proxy_status, status,
+              to_char(meeting_date, 'YYYY-MM-DD') AS meeting_date, meeting_date_known, proxy_status, status,
               pdf_filename, created_at, has_no_action, has_exempt_solicitation
          FROM filings
         WHERE filing_type = 'proposal'

@@ -199,7 +199,8 @@
   .pd-head h3 { margin: 0; font-size: 18px; font-family: Georgia, "Times New Roman", serif; line-height: 1.25; }
   .pd-x { background: none; border: none; color: #fff; font-size: 26px; cursor: pointer; line-height: 1; flex-shrink: 0; opacity: 0.85; }
   .pd-x:hover { opacity: 1; }
-  .pd-body { padding: 28px; max-height: 76vh; overflow-y: auto; }
+  /* No inner scrollbar — the whole modal flows and the overlay scrolls, like the artifact. */
+  .pd-body { padding: 28px; }
   .pd-company { margin: 0 0 6px; font-size: 25px; color: #1a3a5c; font-family: Georgia, "Times New Roman", serif; }
   .pd-date { font-size: 12px; color: #777; margin: 0 0 6px; }
   .pd-badge { display: inline-block; margin-left: 6px; padding: 2px 9px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; vertical-align: middle; }
@@ -228,7 +229,7 @@
   .pd-sbtn.mail:hover { color: #fff; background: #c8a84b; border-color: #c8a84b; }
   .pd-copied { font-size: 11px; color: #15803d; font-weight: 600; }
 
-  .pd-life { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 18px; padding: 18px 6px; border-top: 1px solid #e7e4dc; border-bottom: 1px solid #e7e4dc; }
+  .pd-life { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 18px; padding: 18px 6px; }
   .pd-step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
   .pd-step:not(:last-child)::after { content: ""; position: absolute; top: 7px; left: 50%; width: 100%; height: 2px; background: #e3e0d8; z-index: 0; }
   .pd-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c3c9d2; background: #fbfaf7; z-index: 1; margin-bottom: 6px; }

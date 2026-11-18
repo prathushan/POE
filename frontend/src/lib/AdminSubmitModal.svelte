@@ -163,7 +163,7 @@
 {/if}
 
 <style>
-  .submit-modal { max-width: 760px; }
+  .submit-modal { max-width: 820px; } /* match the public submit popup width */
   .req { color: var(--accent); }
 
   .ok-banner {

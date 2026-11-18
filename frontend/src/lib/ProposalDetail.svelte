@@ -93,9 +93,9 @@
 
           <div class="pd-life">
             <div class="pd-step done"><span class="pd-dot"></span><span class="pd-l">PROPOSAL FILED</span><span class="pd-s">{fmt(record.created_at)}</span></div>
-            <div class="pd-step {exempt ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">EXEMPT SOLICITATION</span><span class="pd-s">{exempt ? "Filed" : "None on record"}</span></div>
             <div class="pd-step {noAction ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">NO-ACTION</span><span class="pd-s">{noAction ? (noAction.notice_date ? fmt(noAction.notice_date) : "Filed") : "None on record"}</span></div>
             <div class="pd-step {record.proxy_status ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">EXCLUSION</span><span class="pd-s">{record.proxy_status || "Not yet known"}</span></div>
+            <div class="pd-step {exempt ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">EXEMPT SOLICITATION</span><span class="pd-s">{exempt ? "Filed" : "None on record"}</span></div>
             <div class="pd-step {record.meeting_date_known ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">{record.meeting_date_known ? "AGM DATE" : "EST. AGM DATE"}</span><span class="pd-s">{fmt(record.meeting_date)}</span></div>
           </div>
 

@@ -202,10 +202,6 @@
             <span class="dot"></span><span class="step-label">PROPOSAL FILED</span>
             <span class="step-sub">{fmt(record.created_at)}</span>
           </div>
-          <div class="step {exempt ? 'done' : ''}">
-            <span class="dot"></span><span class="step-label">EXEMPT SOLICITATION</span>
-            <span class="step-sub">{exempt ? "Filed" : "None on record"}</span>
-          </div>
           <div class="step {noAction ? 'done' : ''}">
             <span class="dot"></span><span class="step-label">NO-ACTION</span>
             <span class="step-sub">{noAction ? (noAction.notice_date ? fmt(noAction.notice_date) : "Filed") : "None on record"}</span>
@@ -213,6 +209,10 @@
           <div class="step {record.proxy_status ? 'done' : ''}">
             <span class="dot"></span><span class="step-label">EXCLUSION</span>
             <span class="step-sub">{record.proxy_status ? statusLabel : "Not yet known"}</span>
+          </div>
+          <div class="step {exempt ? 'done' : ''}">
+            <span class="dot"></span><span class="step-label">EXEMPT SOLICITATION</span>
+            <span class="step-sub">{exempt ? "Filed" : "None on record"}</span>
           </div>
           <div class="step {record.meeting_date_known ? 'done' : ''}">
             <span class="dot"></span><span class="step-label">{record.meeting_date_known ? "AGM DATE" : "EST. AGM DATE"}</span>

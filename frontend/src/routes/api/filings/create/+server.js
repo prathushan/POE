@@ -33,6 +33,7 @@ export const POST = async ({ request, locals }) => {
       const meeting_date = form.get('meeting_date') || null;
       const meeting_date_known = form.get('meeting_date_known') === 'true';
       const proxy_status = form.get('proxy_status') || null;
+      const proxy_preview_interest = form.get('proxy_preview_interest') === 'true';
       const primary = form.get('primary_file');
 
       if (!company_name || !registrant_cik || !proposal_topic || !meeting_date || !primary || primary.size === 0) {
@@ -44,13 +45,13 @@ export const POST = async ({ request, locals }) => {
         `INSERT INTO filings
           (accession_number, filing_type, company_name, company_cik, memo_submitter,
            filer_user_id, filer_name, filer_cik, contact_name, contact_cik, contact_email,
-           subject, proposal_topic, proposal_text, meeting_date, meeting_date_known, proxy_status,
+           subject, proposal_topic, proposal_text, meeting_date, meeting_date_known, proxy_status, proxy_preview_interest,
            pdf_s3_key, pdf_filename, status)
-         VALUES ($1,'proposal',$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'pending')`,
+         VALUES ($1,'proposal',$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'pending')`,
         [
           'PROP-' + Date.now(), company_name, registrant_cik, company_name,
           user.id, user.org_name, user.cik, user.contact_name || '-', user.cik, user.email,
-          proposal_topic, proposal_topic, proposal_text, meeting_date, meeting_date_known, proxy_status,
+          proposal_topic, proposal_topic, proposal_text, meeting_date, meeting_date_known, proxy_status, proxy_preview_interest,
           pdf.key, pdf.filename,
         ]
       );
@@ -97,6 +98,7 @@ export const POST = async ({ request, locals }) => {
       const def14a_link = form.get('def14a_link') || null;
       const item_number = form.get('item_number') || null;
       const voluntary = form.get('voluntary_5m') === 'true';
+      const agm_date = form.get('agm_date') || null; // round-2 §6: optionally confirm the proposal's AGM
       const primary = form.get('primary_file');
       if (!proposal_id || !primary || primary.size === 0) {
         return json({ message: 'Missing proposal or exempt solicitation PDF' }, { status: 400 });
@@ -119,6 +121,13 @@ export const POST = async ({ request, locals }) => {
       );
       // Attachments publish immediately (scope §2/§5) — set the parent flag now.
       await pool.query(`UPDATE filings SET has_exempt_solicitation = true WHERE id = $1`, [proposal_id]);
+      // round-2 §6: if an AGM date was supplied, confirm it on the parent proposal.
+      if (agm_date) {
+        await pool.query(
+          `UPDATE filings SET meeting_date = $1, meeting_date_known = true WHERE id = $2`,
+          [agm_date, proposal_id]
+        );
+      }
       return json({ success: true, filing_type: 'exempt_solicitation' });
     }
 

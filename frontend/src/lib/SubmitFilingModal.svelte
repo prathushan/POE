@@ -103,8 +103,12 @@
   let proposalSearch = $state("");
   let myProposals = $state([]);
 
+  // ── Edit mode (round-2 §7/§8): the proposal being edited ──
+  let edit_id = $state("");
+
   // ── No-action ──
   let exclusion_bases = $state([]);
+  let basisDdOpen = $state(false); // multi-select exclusion-basis dropdown open/closed
   function toggleBasis(b) {
     exclusion_bases = exclusion_bases.includes(b)
       ? exclusion_bases.filter((x) => x !== b)
@@ -116,6 +120,8 @@
   let def14a_link = $state("");
   let item_number = $state("");
   let voluntary_5m = $state(false);
+  // round-2 §6: optionally confirm the proposal's AGM date from the exempt form
+  let exempt_agm_date = $state("");
 
   // ── Standalone (legacy) extra ──
   let std_company = $state("");
@@ -128,6 +134,8 @@
   let second_file = $state(null);
 
   let certify = $state(false);
+  // round-2 §5: filer flags interest in Proxy Preview 2027 (admin can see/sort)
+  let proxyPreviewInterest = $state(false);
   let submitting = $state(false);
 
   const TOPICS = [
@@ -141,6 +149,7 @@
     new: "Submit a New Shareholder Proposal",
     no_action: "Add No-Action/Exclusion to Proposal",
     exempt: "Add Exempt Solicitation to Proposal",
+    edit: "Edit a Submitted Proposal",
     standalone: "Submit a Standalone Exempt Solicitation",
   };
 
@@ -170,16 +179,40 @@
         myProposals = res.ok ? await res.json() : [];
       } catch { myProposals = []; }
     }
+    if (mode === "edit") {
+      loadCompanies(); // same company typeahead as "new"
+      try {
+        const res = await fetch("/api/filings/my-proposals?all=1");
+        myProposals = res.ok ? await res.json() : [];
+      } catch { myProposals = []; }
+    }
+  }
+
+  // Pick a proposal to EDIT → load its current values into the form.
+  function pickForEdit(p) {
+    edit_id = p.id;
+    proposalSearch = `${p.company_name} — ${p.proposal_topic ?? ""}`;
+    company_name = p.company_name ?? "";
+    registrant_cik = p.company_cik ?? "";
+    const known = TOPICS.includes(p.proposal_topic);
+    proposal_topic = known ? p.proposal_topic : (p.proposal_topic ? "Other" : "");
+    proposal_topic_other = known ? "" : (p.proposal_topic ?? "");
+    proposal_text = p.proposal_text ?? "";
+    meeting_date = p.meeting_date ? String(p.meeting_date).slice(0, 10) : "";
+    meeting_date_known = !!p.meeting_date_known;
+    proxy_status = p.proxy_status ?? "";
+    primary_file = null; // keep existing PDF unless they upload a new one
   }
 
   function resetFields() {
     company_name = registrant_cik = proposal_topic = proposal_topic_other = "";
     meeting_date = ""; meeting_date_known = false; proposal_text = ""; proxy_status = "";
-    parent_proposal_id = ""; proposalSearch = "";
-    exclusion_bases = []; notice_date = "";
-    def14a_link = ""; item_number = ""; voluntary_5m = false;
+    parent_proposal_id = ""; proposalSearch = ""; edit_id = "";
+    exclusion_bases = []; notice_date = ""; basisDdOpen = false;
+    def14a_link = ""; item_number = ""; voluntary_5m = false; exempt_agm_date = "";
     std_company = ""; std_topic = ""; std_contact = ""; std_5m_ack = false;
     primary_file = null; second_file = null; certify = false;
+    proxyPreviewInterest = false;
     edgarResults = [];
   }
 
@@ -201,7 +234,14 @@
 
   let confirmOpen = $state(false);
   // which success message to show in the styled confirmation popup
-  let successKind = $state("proposal"); // "proposal" | "standalone"
+  let successKind = $state("proposal"); // "proposal" | "no_action" | "exempt" | "standalone" | "edit"
+  const successHeadline = $derived(
+    successKind === "no_action" ? "No Action Submitted Successfully"
+      : successKind === "exempt" ? "Exempt Solicitation Submitted Successfully"
+      : successKind === "standalone" ? "Filing Submitted Successfully"
+      : successKind === "edit" ? "Proposal Updated Successfully"
+      : "Proposal Submitted Successfully"
+  );
   function closeConfirm() {
     confirmOpen = false;
     window.location.reload();
@@ -228,10 +268,11 @@
       fd.append("meeting_date", meeting_date);
       fd.append("meeting_date_known", meeting_date_known);
       fd.append("proxy_status", proxy_status);
+      fd.append("proxy_preview_interest", proxyPreviewInterest);
       fd.append("primary_file", primary_file);
     } else if (mode === "no_action") {
-      if (!parent_proposal_id || exclusion_bases.length === 0 || !notice_date) {
-        alert("Please select a proposal, an exclusion basis, and a notice date."); return;
+      if (!parent_proposal_id || exclusion_bases.length === 0) {
+        alert("Please select a proposal and at least one exclusion basis."); return;
       }
       fd.append("proposal_id", parent_proposal_id);
       fd.append("exclusion_basis", JSON.stringify(exclusion_bases));
@@ -246,7 +287,22 @@
       fd.append("def14a_link", def14a_link);
       fd.append("item_number", item_number);
       fd.append("voluntary_5m", voluntary_5m);
+      if (exempt_agm_date) fd.append("agm_date", exempt_agm_date);
       fd.append("primary_file", primary_file);
+    } else if (mode === "edit") {
+      // Round-2 §7/§8: edit one of my own submitted proposals (PDF optional).
+      if (!edit_id || !company_name || !registrant_cik || !proposal_topic || !meeting_date) {
+        alert("Please select a proposal and fill all required (*) fields."); return;
+      }
+      fd.append("id", edit_id);
+      fd.append("company_name", company_name);
+      fd.append("registrant_cik", registrant_cik);
+      fd.append("proposal_topic", proposal_topic === "Other" ? proposal_topic_other : proposal_topic);
+      fd.append("proposal_text", proposal_text);
+      fd.append("meeting_date", meeting_date);
+      fd.append("meeting_date_known", meeting_date_known);
+      fd.append("proxy_status", proxy_status);
+      if (primary_file) fd.append("primary_file", primary_file);
     } else if (mode === "standalone") {
       if (!def14a_link || !std_company || !std_topic || !primary_file) {
         alert("Please fill all required (*) fields and upload the proxy memo PDF."); return;
@@ -264,14 +320,20 @@
 
     submitting = true;
     try {
-      const res = await fetch("/api/filings/create", {
+      const endpoint = mode === "edit" ? "/api/filings/update-proposal" : "/api/filings/create";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "x-user": JSON.stringify(user) },
         body: fd,
       });
       const data = await res.json();
       if (res.ok) {
-        if (mode === "new") {
+        if (mode === "edit") {
+          // Edited proposal → styled confirmation popup (round-2 §7/§8).
+          successKind = "edit";
+          close();
+          confirmOpen = true;
+        } else if (mode === "new") {
           // Shareholder proposal → show the Proxy Preview confirmation popup.
           // The page reloads when the user dismisses it (closeConfirm).
           successKind = "proposal";
@@ -284,14 +346,11 @@
           close();
           confirmOpen = true;
         } else {
-          // Inline, company-named confirmation (no popup) — scope §5.
-          const company = selectedProposal?.company_name || "the proposal";
-          const label = mode === "no_action" ? "No-action notice" : "Exempt solicitation";
-          attachNotice = `${label} attached to ${company}. Live immediately — no admin approval required.`;
-          setTimeout(() => {
-            close();
-            window.location.reload();
-          }, 2600);
+          // no_action / exempt → styled confirmation popup (round-2 §4),
+          // with a headline matching the submission type.
+          successKind = mode; // "no_action" | "exempt"
+          close();
+          confirmOpen = true;
         }
       } else {
         alert("Error: " + (data.message || "could not submit"));
@@ -330,6 +389,7 @@
                 <option value="new">File a new shareholder proposal</option>
                 <option value="no_action">Attach a no-action / exclusion notice to one of my proposals</option>
                 <option value="exempt">Attach an exempt solicitation to one of my proposals</option>
+                <option value="edit">Edit one of my submitted proposals</option>
 <!--
                   Standalone exempt solicitation removed per client (2026-11-14):
                   exempt solicitations are no longer filed alone — they attach to a proposal.
@@ -344,8 +404,39 @@
           </div>
         </div>
 
-        <!-- ══════ NEW PROPOSAL ══════ -->
-        {#if mode === "new"}
+        <!-- ══════ EDIT: pick which submitted proposal to edit (round-2 §7/§8) ══════ -->
+        {#if mode === "edit"}
+          <div class="form-section">
+            <div class="form-section-title">Select a Proposal to Edit</div>
+            <div class="form-section-body">
+              <div class="form-row">
+                <label>Your Submitted Proposals <span class="req">*</span></label>
+                <input bind:value={proposalSearch} oninput={() => (edit_id = "")} placeholder="Type to search your proposals..." />
+                <div class="helper">Shows every proposal you've submitted (any status). Select one to load its details below, edit, and save.</div>
+
+                {#if edit_id}
+                  <p class="selected-note">✓ Editing: {proposalSearch}</p>
+                {:else if myProposals.length === 0}
+                  <div class="helper muted">You haven't submitted any proposals yet.</div>
+                {:else if filteredProposals.length === 0}
+                  <div class="helper muted">No proposals match your search.</div>
+                {:else}
+                  <div class="proposal-list">
+                    {#each filteredProposals as p}
+                      <button type="button" class="prop-item" onclick={() => pickForEdit(p)}>
+                        <strong>{p.company_name}</strong>
+                        <small>{p.proposal_topic ?? "—"}{#if p.status} · {p.status}{/if}{#if p.created_at} · Filed {fmtDate(p.created_at)}{/if}</small>
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          </div>
+        {/if}
+
+        <!-- ══════ NEW PROPOSAL / EDIT (identical form) ══════ -->
+        {#if mode === "new" || (mode === "edit" && edit_id)}
           <div class="form-section">
             <div class="form-section-title">Company Information</div>
             <div class="form-section-body">
@@ -442,13 +533,13 @@
               </div>
 
               <div class="form-row">
-                <label>Supporting Document <span class="req">*</span></label>
+                <label>Supporting Document {#if mode === "edit"}<span class="optional">(PDF, optional)</span>{:else}<span class="req">*</span>{/if}</label>
                 <label class="file-upload-zone {primary_file ? 'has-file' : ''}">
                   <div class="upload-icon">📄</div>
-                  <p>{primary_file ? primary_file.name : "Click or drag to upload the full resolution (PDF)"}</p>
+                  <p>{primary_file ? primary_file.name : (mode === "edit" ? "Upload a new PDF to replace the current one" : "Click or drag to upload the full resolution (PDF)")}</p>
                   <input type="file" accept="application/pdf" onchange={(e) => (primary_file = e.target.files[0])} />
                 </label>
-                <div class="helper">Upload the complete shareholder resolution document. This is the primary filing record on POE.</div>
+                <div class="helper">{#if mode === "edit"}Leave empty to keep the PDF already on file. Uploading a new one replaces it.{:else}Upload the complete shareholder resolution document. This is the primary filing record on POE.{/if}</div>
               </div>
             </div>
           </div>
@@ -460,23 +551,41 @@
           <div class="form-section">
             <div class="form-section-title">No-Action / Exclusion Details</div>
             <div class="form-section-body">
-              <div class="form-row">
-                <label>Exclusion Basis <span class="req">*</span> <span class="optional">(select all that apply)</span></label>
-                <div class="basis-list">
-                  {#each EXCLUSION_BASES as b}
-                    <label class="basis-item">
-                      <input type="checkbox" checked={exclusion_bases.includes(b)} onchange={() => toggleBasis(b)} />
-                      <span class="basis-text">
-                        {#if b.includes(" — ")}<strong>{b.split(" — ")[0]}</strong> — {b.split(" — ").slice(1).join(" — ")}{:else}<strong>{b}</strong>{/if}
+              <div class="form-grid">
+                <div class="form-row">
+                  <label>Exclusion Basis <span class="req">*</span> <span class="optional">(select all that apply)</span></label>
+                  <div class="multiselect">
+                    <button type="button" class="ms-trigger" onclick={() => (basisDdOpen = !basisDdOpen)}>
+                      <span class="ms-value {exclusion_bases.length ? '' : 'ms-placeholder'}">
+                        {exclusion_bases.length ? `${exclusion_bases.length} selected` : "— Select —"}
                       </span>
-                    </label>
-                  {/each}
+                      <span class="ms-caret">▾</span>
+                    </button>
+                    {#if basisDdOpen}
+                      <div class="ms-backdrop" onclick={() => (basisDdOpen = false)} role="presentation"></div>
+                      <div class="ms-panel">
+                        {#each EXCLUSION_BASES as b}
+                          <label class="ms-option">
+                            <input type="checkbox" checked={exclusion_bases.includes(b)} onchange={() => toggleBasis(b)} />
+                            <span>{#if b.includes(" — ")}<strong>{b.split(" — ")[0]}</strong> — {b.split(" — ").slice(1).join(" — ")}{:else}<strong>{b}</strong>{/if}</span>
+                          </label>
+                        {/each}
+                      </div>
+                    {/if}
+                    {#if exclusion_bases.length}
+                      <div class="ms-chips">
+                        {#each exclusion_bases as b}
+                          <span class="ms-chip">{b.includes(" — ") ? b.split(" — ")[0] : b}<button type="button" onclick={() => toggleBasis(b)} aria-label="Remove">×</button></span>
+                        {/each}
+                      </div>
+                    {/if}
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-row" style="max-width: 280px;">
-                <label>No-Action Notice Date <span class="req">*</span></label>
-                <input type="date" bind:value={notice_date} />
+                <div class="form-row">
+                  <label>No-Action Notice Date <span class="optional">(optional)</span></label>
+                  <input type="date" bind:value={notice_date} />
+                </div>
               </div>
 
               <div class="form-row">
@@ -515,6 +624,12 @@
                   <label>Item Number <span class="optional">(optional)</span></label>
                   <input bind:value={item_number} placeholder="e.g., Item 4" />
                 </div>
+              </div>
+
+              <div class="form-row">
+                <label>Annual Meeting Date <span class="optional">(update — now Known / confirmed)</span></label>
+                <input type="date" bind:value={exempt_agm_date} />
+                <div class="helper">By this stage the AGM is usually confirmed. Setting a date here updates the linked proposal's meeting date to <strong>Known (confirmed)</strong>. Leave blank to keep it unchanged.</div>
               </div>
 
               <div class="form-row">
@@ -579,7 +694,7 @@
         {/if}
 
         <!-- FILER INFO (shown for proposal + attach modes) -->
-        {#if mode === "new" || mode === "no_action" || mode === "exempt"}
+        {#if mode === "new" || mode === "no_action" || mode === "exempt" || (mode === "edit" && edit_id)}
           <div class="form-section">
             <div class="form-section-title">Filer Information <span class="auto">· Auto-populated from your account</span></div>
             <div class="form-section-body">
@@ -608,8 +723,8 @@
           </div>
         {/if}
 
-        <!-- CERTIFICATION -->
-        {#if mode}
+        <!-- CERTIFICATION (only once a mode is chosen / proposal picked) -->
+        {#if mode && (mode !== "edit" || edit_id)}
           <div class="form-section">
             <div class="form-section-title">Certification</div>
             <div class="form-section-body">
@@ -617,21 +732,23 @@
                 <input type="checkbox" bind:checked={certify} />
                 <span>I certify that the information provided is true and accurate to the best of my knowledge, and I am authorized to submit this filing on behalf of the named filer.</span>
               </label>
+              {#if mode === "new"}
+                <label class="checkbox-row" style="margin-top:12px;">
+                  <input type="checkbox" bind:checked={proxyPreviewInterest} />
+                  <span>I am interested in submitting an article to be possibly included in <strong>Proxy Preview 2027</strong>.</span>
+                </label>
+              {/if}
             </div>
           </div>
-
-          <!-- ACTIONS -->
-          <div class="form-actions">
-            <button class="btn-cancel" onclick={close}>Cancel</button>
-            <button class="btn-primary" onclick={submitFiling} disabled={!mode || submitting}>
-              {submitting ? "Submitting…" : "Submit Filing"}
-            </button>
-          </div>
-        {:else}
-          <div class="form-actions">
-            <button class="btn-cancel" onclick={close}>Cancel</button>
-          </div>
         {/if}
+
+        <!-- ACTIONS (always shown, matching the prototype) -->
+        <div class="form-actions">
+          <button class="btn-cancel" onclick={close}>Cancel</button>
+          <button class="btn-primary" onclick={submitFiling} disabled={submitting || !mode || (mode === "edit" && !edit_id)}>
+            {submitting ? (mode === "edit" ? "Saving…" : "Submitting…") : (mode === "edit" ? "Save Changes" : "Submit Filing")}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -642,14 +759,19 @@
   <div class="confirm-popup show" onclick={closeConfirm} role="presentation">
     <div class="confirm-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
       <div class="check-icon">✓</div>
-      <h3>{successKind === "standalone" ? "Filing Submitted Successfully" : "Proposal Submitted Successfully"}</h3>
+      <h3>{successHeadline}</h3>
       <div class="confirm-msg">
-        {#if successKind === "standalone"}
+        {#if successKind === "no_action"}
+          <p>Your <strong>no-action / exclusion notice has been submitted</strong> and is now live on the proposal.</p>
+          <p class="cm-line"><span class="cm-dot">●</span> <strong>Be sure to return to update your resolution</strong> once you know if it has been included, excluded, or withdrawn on the proxy statement.</p>
+        {:else if successKind === "exempt"}
+          <p>Your <strong>exempt solicitation has been submitted</strong> and is now live on the proposal.</p>
+          <p class="cm-line"><span class="cm-dot">●</span> <strong>Be sure to return to update your resolution</strong> once you know if it has been included, excluded, or withdrawn on the proxy statement.</p>
+        {:else if successKind === "standalone"}
           <p>Your <strong>exempt solicitation has been submitted</strong> and is pending admin review.</p>
         {:else}
           <p><strong>Your shareholder proposal has been submitted</strong> and is pending admin review.</p>
           <p class="cm-line"><span class="cm-dot">●</span> <strong>Be sure to return to update your resolution</strong> once you know if it has been included, excluded, or withdrawn on the proxy statement.</p>
-          <p class="cm-line"><span class="cm-dot">●</span> If you have an interest in submitting an article to be possibly included in <strong>Proxy Preview 2027</strong> please review the {#if PROXY_PREVIEW_URL}<a href={PROXY_PREVIEW_URL} target="_blank" rel="noopener noreferrer">contribution instructions</a>{:else}<span class="cf-link-soon">contribution instructions</span>{/if}.</p>
         {/if}
       </div>
       <button class="btn-primary confirm-done" onclick={closeConfirm}>Done</button>
@@ -705,12 +827,14 @@
 {/snippet}
 
 <style>
-  /* The submit modal follows the prototype at 820px; shell + form skeleton
+  /* The submit modal follows the prototype at 780px; shell + form skeleton
      (.modal-overlay/.modal/.modal-header/.form-section/.form-row/.form-grid/
      .btn-cancel/.btn-primary/.file-upload-zone/.checkbox-row/.date-kind/
      .proposal-selector/.proposal-dropdown/.inherited-field) come from app.css
      so they match the design system exactly. Only the extras live here. */
-  .submit-modal { max-width: 820px; }
+  .submit-modal { max-width: 780px; }
+  /* No divider line above the footer buttons (client preference) */
+  .submit-modal .form-actions { border-top: none; padding-top: 0; }
 
   .form-section-title .auto {
     text-transform: none; letter-spacing: 0; color: var(--g4); font-weight: 400;
@@ -741,25 +865,39 @@
   .proposal-list .prop-item strong { color: var(--blue); display: block; margin-bottom: 2px; }
   .proposal-list .prop-item small { color: var(--g4); font-family: var(--mono); font-size: 11px; }
 
-  /* no-action multi exclusion-basis checkbox grid */
-  .basis-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 26px; margin-top: 4px; }
-  .basis-item {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 13px; line-height: 1.4; color: var(--g5); cursor: pointer;
-    text-transform: none; letter-spacing: 0; font-weight: 400; font-family: var(--sans); margin: 0;
+  /* no-action exclusion-basis — multi-select dropdown (looks like a select, picks many) */
+  .multiselect { position: relative; }
+  .ms-trigger {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-family: var(--sans); font-size: 14px; padding: 10px 14px;
+    border: 1.5px solid var(--g2); border-radius: 4px; background: #fff; color: var(--ink);
+    cursor: pointer; text-align: left;
   }
-  .basis-item input[type="checkbox"] {
-    appearance: none; -webkit-appearance: none; flex: 0 0 auto;
-    width: 16px; height: 16px; margin: 1px 0 0; border: 1.5px solid var(--g3);
-    border-radius: 4px; background: #fff; cursor: pointer; position: relative;
+  .ms-trigger:hover { border-color: var(--blue-light); }
+  .ms-placeholder { color: var(--g3); }
+  .ms-caret { color: var(--g4); font-size: 12px; flex: 0 0 auto; }
+  .ms-backdrop { position: fixed; inset: 0; z-index: 40; }
+  .ms-panel {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
+    background: #fff; border: 1.5px solid var(--blue-light); border-radius: 4px;
+    box-shadow: var(--shadow-lg); max-height: 260px; overflow-y: auto; padding: 4px;
   }
-  .basis-item input[type="checkbox"]:checked { background: var(--blue); border-color: var(--blue); }
-  .basis-item input[type="checkbox"]:checked::after {
-    content: "✓"; color: #fff; font-size: 11px; line-height: 1; font-weight: 700;
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  .ms-option {
+    display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 3px;
+    font-family: var(--sans); font-size: 13px; line-height: 1.4; color: var(--g5);
+    text-transform: none; letter-spacing: 0; font-weight: 400; margin: 0; cursor: pointer;
   }
-  .basis-text strong { color: var(--blue); font-weight: 700; }
-  @media (max-width: 620px) { .basis-list { grid-template-columns: 1fr; } }
+  .ms-option:hover { background: var(--paper); }
+  .ms-option input[type="checkbox"] { margin-top: 2px; accent-color: var(--blue); width: 15px; height: 15px; flex: 0 0 auto; }
+  .ms-option strong { color: var(--blue); font-weight: 700; }
+  .ms-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .ms-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #e8f0fe; color: var(--blue); font-family: var(--mono); font-size: 11px; font-weight: 600;
+    padding: 3px 6px 3px 9px; border-radius: 3px;
+  }
+  .ms-chip button { background: none; border: none; color: var(--blue); cursor: pointer; font-size: 13px; line-height: 1; padding: 0; }
+  .ms-chip button:hover { color: var(--accent); }
 
   /* inline attach-success banner */
   .attach-notice {

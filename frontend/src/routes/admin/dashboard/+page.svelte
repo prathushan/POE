@@ -537,10 +537,6 @@
                 <span class="dot"></span><span class="step-label">PROPOSAL FILED</span>
                 <span class="step-sub">{fmtDate(pv.created_at)}</span>
               </div>
-              <div class="step {es ? 'done' : ''}">
-                <span class="dot"></span><span class="step-label">EXEMPT SOLICITATION</span>
-                <span class="step-sub">{es ? (es.status === "approved" ? "Filed" : "Pending") : "None on record"}</span>
-              </div>
               <div class="step {na ? 'done' : ''}">
                 <span class="dot"></span><span class="step-label">NO-ACTION</span>
                 <span class="step-sub">{na ? (na.notice_date ? fmtDate(na.notice_date) : (na.status === "approved" ? "Filed" : "Pending")) : "None on record"}</span>
@@ -548,6 +544,10 @@
               <div class="step {pv.proxy_status ? 'done' : ''}">
                 <span class="dot"></span><span class="step-label">EXCLUSION</span>
                 <span class="step-sub">{pv.proxy_status || "Not yet known"}</span>
+              </div>
+              <div class="step {es ? 'done' : ''}">
+                <span class="dot"></span><span class="step-label">EXEMPT SOLICITATION</span>
+                <span class="step-sub">{es ? (es.status === "approved" ? "Filed" : "Pending") : "None on record"}</span>
               </div>
               <div class="step {pv.meeting_date_known ? 'done' : ''}">
                 <span class="dot"></span><span class="step-label">{pv.meeting_date_known ? "AGM DATE" : "EST. AGM DATE"}</span>
@@ -563,6 +563,7 @@
                   <div>Registrant CIK</div><div>{pv.company_cik || "-"}</div>
                   <div>Proposal Topic</div><div>{#if pv.proposal_topic}<span class="topic-chip">{pv.proposal_topic}</span>{:else}-{/if}</div>
                   <div>Annual Meeting</div><div>{pv.meeting_date ? fmtDate(pv.meeting_date) : "-"} <span class="muted">{pv.meeting_date_known ? "Confirmed" : "Estimated"}</span></div>
+                  <div>Proxy Preview 2027</div><div>{#if pv.proxy_preview_interest}<span class="pp-interest">★ Interested</span>{:else}<span class="muted">Not interested</span>{/if}</div>
                 </div>
               </div>
               <div>
@@ -1495,6 +1496,11 @@
   }
   .yn.yes { color: var(--green); background: var(--green-light); padding: 2px 8px; border-radius: 3px; }
   .yn.no { color: var(--g3); font-weight: 400; }
+  .pp-interest {
+    display: inline-block; font-family: "IBM Plex Mono", "Courier New", monospace;
+    font-size: 11px; font-weight: 600; color: var(--blue);
+    background: #fdf3d6; border: 1px solid var(--gold); padding: 2px 8px; border-radius: 3px;
+  }
 
   /* .grid div:first-child {
     color: #777;

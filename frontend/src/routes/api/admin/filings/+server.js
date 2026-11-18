@@ -73,6 +73,7 @@ export const GET = async () => {
         vote_for,
         vote_against,
         vote_abstain,
+        proxy_preview_interest,
         status,
         created_at
       FROM filings

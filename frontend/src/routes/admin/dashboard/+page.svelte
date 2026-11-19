@@ -478,6 +478,8 @@
     </div>
   {/if}
 
+  <svelte:window on:keydown={(e) => { if (e.key === "Escape" && showModal) closeModal(); }} />
+
   {#if showModal && selectedFiling}
     <div class="modal-overlay">
       <div class="modal">

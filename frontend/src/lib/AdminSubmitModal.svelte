@@ -77,6 +77,8 @@
   }
 </script>
 
+<svelte:window onkeydown={(e) => { if (open && e.key === "Escape") close(); }} />
+
 {#if open}
   <div class="modal-overlay active" onclick={close} role="presentation">
     <div class="modal submit-modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">

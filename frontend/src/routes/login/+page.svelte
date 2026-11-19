@@ -114,6 +114,10 @@ async function login() {
 
     <p class="auth-forgot"><a href="/forgot-password">Forgot password?</a></p>
 
+    {#if message}
+      <p class="auth-msg {message.toLowerCase().includes('success') ? 'ok' : 'err'}" role="alert">{message}</p>
+    {/if}
+
     <button class="btn-auth" on:click={login}>SIGN IN</button>
 
     <p class="auth-footer">
@@ -128,4 +132,7 @@ async function login() {
   .auth-forgot { text-align: right; margin: 8px 0 4px; font-size: 13px; }
   .auth-forgot a { color: #1f3b5b; text-decoration: none; }
   .auth-forgot a:hover { text-decoration: underline; }
+  .auth-msg { font-size: 13px; padding: 9px 12px; border-radius: 6px; margin: 4px 0 10px; line-height: 1.4; }
+  .auth-msg.err { background: #fde8e4; color: #b23b32; border: 1px solid #f0c7bf; }
+  .auth-msg.ok { background: #e6f4ea; color: #15803d; border: 1px solid #b7e0c4; }
 </style>

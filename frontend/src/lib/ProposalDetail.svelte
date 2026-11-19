@@ -1,12 +1,41 @@
 <script>
   import { parseBases } from "$lib/exclusionBases.js";
+  import SubmitFilingModal from "$lib/SubmitFilingModal.svelte";
 
-  let { open = $bindable(false), record = null, exempt = null, noAction = null } = $props();
+  let { open = $bindable(false), record = null, exempt = null, noAction = null, user = null } = $props();
 
   let materialTab = $state("proposal");
 
   const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }) : "-");
   const isLegacy = (r) => r && r.filing_type === "exempt_solicitation" && !r.proposal_id;
+
+  // ── owner controls ("Your proposal" panel, like /filing/[id]) ──
+  const isOwner = $derived(!!(user && record && user.id === record.filer_user_id));
+  let attachOpen = $state(false);
+  let attachMode = $state("");
+  let proxyStatus = $state("");
+  let agmKnown = $state("estimated");
+  // keep the owner-field selects in sync with the record each time it opens
+  $effect(() => {
+    if (open && record) {
+      proxyStatus = record.proxy_status || "";
+      agmKnown = record.meeting_date_known ? "known" : "estimated";
+    }
+  });
+  function openAttach(mode) { attachMode = mode; attachOpen = true; }
+  async function saveProxy() {
+    try {
+      await fetch("/api/filings/update-proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: record.id,
+          proxy_status: proxyStatus || null,
+          meeting_date_known: agmKnown === "known",
+        }),
+      });
+    } catch (e) { /* non-blocking */ }
+  }
 
   function close() { open = false; }
   $effect(() => { if (open) materialTab = "proposal"; });
@@ -49,6 +78,8 @@
   }
 </script>
 
+<svelte:window onkeydown={(e) => { if (open && !attachOpen && e.key === "Escape") close(); }} />
+
 {#if open && record}
   <div class="pd-overlay" onclick={close} role="presentation">
     <div class="pd-modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
@@ -83,13 +114,48 @@
 
         {:else}
           <!-- UNIFIED PROPOSAL -->
-          <h2 class="pd-company">{record.company_name || "-"}</h2>
-          <p class="pd-date">
-            Filed: {fmt(record.created_at)} · Filer: {record.filer_name || "-"}
-            <span class="pd-badge {record.proxy_status || 'pending'}">{record.proxy_status ? record.proxy_status.charAt(0).toUpperCase() + record.proxy_status.slice(1) : "Pending"}</span>
-          </p>
+          <div class="pd-header-row">
+            <div class="pd-header-left">
+              <h2 class="pd-company">{record.company_name || "-"}</h2>
+              <p class="pd-date">
+                Filed: {fmt(record.created_at)} · Filer: {record.filer_name || "-"}
+                <span class="pd-badge {record.proxy_status || 'pending'}">{record.proxy_status ? record.proxy_status.charAt(0).toUpperCase() + record.proxy_status.slice(1) : "Pending"}</span>
+              </p>
+              {@render shareRow()}
+            </div>
 
-          {@render shareRow()}
+            {#if isOwner}
+              <div class="owner-actions">
+                <div class="owner-actions-label">Your proposal</div>
+                <div class="owner-btn-row">
+                  {#if noAction}
+                    <button type="button" class="btn-sm btn-attached" disabled>✓ No-Action attached</button>
+                  {:else}
+                    <button type="button" class="btn-sm btn-view" onclick={() => openAttach("no_action")}>+ Attach No-Action</button>
+                  {/if}
+                  {#if exempt}
+                    <button type="button" class="btn-sm btn-attached" disabled>✓ Exempt Solicitation attached</button>
+                  {:else}
+                    <button type="button" class="btn-sm btn-view" onclick={() => openAttach("exempt")}>+ Attach Exempt Solicitation</button>
+                  {/if}
+                </div>
+                <label class="owner-status-row">AGM date
+                  <select bind:value={agmKnown} onchange={saveProxy}>
+                    <option value="estimated">Estimated</option>
+                    <option value="known">Known</option>
+                  </select>
+                </label>
+                <label class="owner-status-row">Proxy status
+                  <select bind:value={proxyStatus} onchange={saveProxy}>
+                    <option value="">Not yet known</option>
+                    <option value="included">Included</option>
+                    <option value="excluded">Excluded</option>
+                    <option value="withdrawn">Withdrawn</option>
+                  </select>
+                </label>
+              </div>
+            {/if}
+          </div>
 
           <div class="pd-life">
             <div class="pd-step done"><span class="pd-dot"></span><span class="pd-l">PROPOSAL FILED</span><span class="pd-s">{fmt(record.created_at)}</span></div>
@@ -161,6 +227,11 @@
   </div>
 {/if}
 
+<!-- Attach a no-action / exempt solicitation to this proposal (owner only) -->
+{#if record}
+  <SubmitFilingModal bind:open={attachOpen} {user} initialMode={attachMode} lockedProposal={record} />
+{/if}
+
 {#snippet shareRow()}
   <div class="pd-share">
     <span class="pd-share-label">Share</span>
@@ -200,8 +271,8 @@
   .pd-x { background: none; border: none; color: #fff; font-size: 26px; cursor: pointer; line-height: 1; flex-shrink: 0; opacity: 0.85; }
   .pd-x:hover { opacity: 1; }
   /* No inner scrollbar — the whole modal flows and the overlay scrolls, like the artifact. */
-  .pd-body { padding: 28px; }
-  .pd-company { margin: 0 0 6px; font-size: 25px; color: #1a3a5c; font-family: Georgia, "Times New Roman", serif; }
+  .pd-body { padding: 28px 28px 32px; }
+  .pd-company { margin: 8px 0 10px; font-size: 26px; line-height: 1.25; color: #1a3a5c; font-family: Georgia, "Times New Roman", serif; }
   .pd-date { font-size: 12px; color: #777; margin: 0 0 6px; }
   .pd-badge { display: inline-block; margin-left: 6px; padding: 2px 9px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; vertical-align: middle; }
   .pd-badge.included { background: #d1fae5; color: #065f46; }
@@ -209,7 +280,7 @@
   .pd-badge.withdrawn { background: #e5e7eb; color: #374151; }
 
   /* social share */
-  .pd-share { display: flex; align-items: center; gap: 9px; margin: 4px 0 2px; }
+  .pd-share { display: flex; align-items: center; gap: 9px; margin: 16px 0 2px; }
   .pd-share-label {
     font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
     color: #9aa1ab; margin-right: 2px;
@@ -228,6 +299,26 @@
   .pd-sbtn.fb:hover { color: #fff; background: #1877f2; border-color: #1877f2; }
   .pd-sbtn.mail:hover { color: #fff; background: #c8a84b; border-color: #c8a84b; }
   .pd-copied { font-size: 11px; color: #15803d; font-weight: 600; }
+
+  /* two-column header: company info left, owner panel top-right (like the artifact) */
+  .pd-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+  .pd-header-left { flex: 1 1 300px; min-width: 260px; }
+
+  /* "Your proposal" owner panel — matches the artifact (.owner-actions) exactly */
+  .owner-actions {
+    flex: 0 1 auto; align-self: flex-start; max-width: 480px;
+    background: #fff; border: 1px solid var(--g2); border-left: 4px solid var(--gold);
+    border-radius: 4px; padding: 12px 14px; margin: 0;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .owner-actions-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g4); }
+  .owner-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .owner-actions .btn-sm { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: 4px; cursor: pointer; border: 1px solid; text-transform: uppercase; letter-spacing: 0.04em; }
+  .owner-actions .btn-view { background: #e8f0fe; color: var(--blue); border-color: var(--blue-light); }
+  .owner-actions .btn-view:hover { background: #d8e6fd; }
+  .owner-actions .btn-attached { background: var(--green-light); color: var(--green); border-color: var(--green-light); cursor: default; }
+  .owner-status-row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--g5); }
+  .owner-status-row select { font-family: var(--sans); font-size: 13px; padding: 5px 8px; border: 1.5px solid var(--g2); border-radius: 4px; background: #fff; }
 
   .pd-life { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 18px; padding: 18px 6px; }
   .pd-step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }

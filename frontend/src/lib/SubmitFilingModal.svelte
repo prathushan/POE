@@ -398,6 +398,8 @@
   }
 </script>
 
+<svelte:window onkeydown={(e) => { if (e.key !== "Escape") return; if (confirmOpen) closeConfirm(); else if (open) close(); }} />
+
 {#if open}
   <div class="modal-overlay active" onclick={close} role="presentation">
     <div class="modal submit-modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
@@ -488,7 +490,7 @@
                   <div class="proposal-selector">
                     <input
                       bind:value={company_name}
-                      oninput={() => { showCompanyDd = true; lookupEdgar(company_name); }}
+                      oninput={() => { showCompanyDd = true; registrant_cik = ""; lookupEdgar(company_name); }}
                       onfocus={() => (showCompanyDd = true)}
                       onblur={() => setTimeout(() => (showCompanyDd = false), 180)}
                       placeholder="Start typing a company name..."

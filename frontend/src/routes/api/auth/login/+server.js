@@ -141,7 +141,7 @@ cookies.set(
   {
     path: '/',
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     secure: false,
     maxAge: 60 * 60 * 24
   }

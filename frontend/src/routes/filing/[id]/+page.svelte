@@ -148,27 +148,27 @@
           </div>
 
           {#if isOwner}
-            <div class="owner-panel">
-              <div class="owner-title">YOUR PROPOSAL</div>
-              <div class="attach-row">
+            <div class="owner-actions">
+              <div class="owner-actions-label">Your proposal</div>
+              <div class="owner-btn-row">
                 {#if noAction}
-                  <span class="attached">✓ NO-ACTION ATTACHED</span>
+                  <button type="button" class="btn-sm btn-attached" disabled>✓ No-Action attached</button>
                 {:else}
-                  <button onclick={() => openAttach("no_action")}>+ ATTACH NO-ACTION</button>
+                  <button type="button" class="btn-sm btn-view" onclick={() => openAttach("no_action")}>+ Attach No-Action</button>
                 {/if}
                 {#if exempt}
-                  <span class="attached">✓ EXEMPT SOLICITATION ATTACHED</span>
+                  <button type="button" class="btn-sm btn-attached" disabled>✓ Exempt Solicitation attached</button>
                 {:else}
-                  <button onclick={() => openAttach("exempt")}>+ ATTACH EXEMPT SOLICITATION</button>
+                  <button type="button" class="btn-sm btn-view" onclick={() => openAttach("exempt")}>+ Attach Exempt Solicitation</button>
                 {/if}
               </div>
-              <label class="owner-field">AGM Date
+              <label class="owner-status-row">AGM date
                 <select bind:value={agmKnown} onchange={saveProxy}>
                   <option value="estimated">Estimated</option>
                   <option value="known">Known</option>
                 </select>
               </label>
-              <label class="owner-field">Proxy Status
+              <label class="owner-status-row">Proxy status
                 <select bind:value={proxyStatus} onchange={saveProxy}>
                   <option value="">Not yet known</option>
                   <option value="included">Included</option>
@@ -333,13 +333,21 @@
   .pd-sbtn.mail:hover { color: #fff; background: #c8a84b; border-color: #c8a84b; }
   .pd-copied { font-size: 11px; color: #15803d; font-weight: 600; }
 
-  .owner-panel { border: 1px solid #d9c18f; background: #fffdf5; border-radius: 8px; padding: 12px 14px; min-width: 260px; }
-  .owner-title { font-size: 10px; letter-spacing: 0.08em; color: #8a7533; margin-bottom: 8px; }
-  .attach-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .attach-row button { background: #fff; border: 1px solid #13294b; color: #13294b; font-family: inherit; font-size: 11px; padding: 6px 8px; border-radius: 5px; cursor: pointer; }
-  .attach-row .attached { font-size: 11px; color: #15803d; align-self: center; }
-  .owner-field { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 8px; font-size: 11px; color: #555; margin-top: 6px; }
-  .owner-field select { padding: 5px 6px; border: 1px solid #ccc; border-radius: 5px; font-family: inherit; font-size: 12px; }
+  /* "Your proposal" owner panel — matches the artifact (.owner-actions) exactly */
+  .owner-actions {
+    align-self: flex-start; max-width: 480px;
+    background: #fff; border: 1px solid var(--g2); border-left: 4px solid var(--gold);
+    border-radius: 4px; padding: 12px 14px; min-width: 260px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .owner-actions-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g4); }
+  .owner-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .owner-actions .btn-sm { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: 4px; cursor: pointer; border: 1px solid; text-transform: uppercase; letter-spacing: 0.04em; }
+  .owner-actions .btn-view { background: #e8f0fe; color: var(--blue); border-color: var(--blue-light); }
+  .owner-actions .btn-view:hover { background: #d8e6fd; }
+  .owner-actions .btn-attached { background: var(--green-light); color: var(--green); border-color: var(--green-light); cursor: default; }
+  .owner-status-row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--g5); }
+  .owner-status-row select { font-family: var(--sans); font-size: 13px; padding: 5px 8px; border: 1.5px solid var(--g2); border-radius: 4px; background: #fff; }
 
   .lifecycle { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 10px; padding: 14px 4px; }
   .lifecycle .step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }

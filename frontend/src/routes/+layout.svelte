@@ -149,7 +149,11 @@
         <h5>Navigate</h5>
         <ul>
           <li><a href="/">Browse Exempt Solicitations</a></li>
-          <li><a href="/login">Submit Exempt Solicitation</a></li>
+          {#if data.user}
+            <li><button type="button" class="footer-link-btn" onclick={() => (showSubmit = true)}>Submit Exempt Solicitation</button></li>
+          {:else}
+            <li><a href="/login">Submit Exempt Solicitation</a></li>
+          {/if}
           <li><a href="/about">About POE</a></li>
           <li><a href="/terms">Terms of Use</a></li>
         </ul>

@@ -5,6 +5,9 @@
   import { fmtDate } from "$lib/formatDate.js";
   import linkIcon from "$lib/assets/link-icon.png";
   import linkedinLogo from "$lib/assets/linkedin-logo.png";
+
+  // Layout provides the signed-in user (for the owner panel in the detail popup).
+  let { data } = $props();
   let search = $state("");
   let prevSearch = ""; // ✅ FIX ADDED
   let filings = $state([]);
@@ -147,7 +150,7 @@
   // );
 
   const filteredFilings = $derived.by(() => {
-    const term = search.toLowerCase();
+    const term = search.trim().toLowerCase();
     let filtered = filings.filter((f) => {
       // proposal-centric: only proposals + legacy standalone exempt solicitations
       if (!isIndexRow(f)) return false;
@@ -177,7 +180,10 @@
     return filtered;
   });
 
+  // Jump back to page 1 whenever the search term changes (reading `search`
+  // makes this effect re-run on every new search, not just on mount).
   $effect(() => {
+    search;
     currentPage = 1;
   });
 </script>
@@ -214,6 +220,8 @@
     <p style="margin:10px 0; font-size:13px; color:#666;">
       {#if filings.length === 0}
         Showing 0 filings
+      {:else if filteredFilings.length === 0}
+        {#if search.trim()}No filings match “{search.trim()}”{:else}No filings yet{/if}
       {:else}
         Showing {Math.min((currentPage - 1) * pageSize + 1, filteredFilings.length)}
         –
@@ -248,7 +256,7 @@
       </thead>
       <tbody>
         {#if filteredFilings.length === 0}
-          <tr><td colspan="7" style="text-align:center;color:#888;padding:24px;">No proposals yet</td></tr>
+          <tr><td colspan="7" style="text-align:center;color:#888;padding:24px;">{search.trim() ? `No filings match “${search.trim()}”` : "No filings yet"}</td></tr>
         {:else}
           {#each getPaginated() as f}
             <tr class="clickable-row" on:click={() => openModal(f)}>
@@ -267,7 +275,7 @@
         {/if}
       </tbody>
     </table>
-    <ProposalDetail bind:open={detailOpen} record={selectedFiling} exempt={detailExempt} noAction={detailNoAction} />
+    <ProposalDetail bind:open={detailOpen} record={selectedFiling} exempt={detailExempt} noAction={detailNoAction} user={data.user} />
     <!-- ✅ PAGINATION -->
     <div class="pagination">
       <button

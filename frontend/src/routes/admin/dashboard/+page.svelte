@@ -319,6 +319,8 @@
   <title>POE | Admin Dashboard</title>
 </svelte:head>
 
+<svelte:window on:keydown={(e) => { if (e.key === "Escape" && showModal) closeModal(); }} />
+
 <div class="container">
   <div class="header"></div>
   <h2 class="title">Filing Administration</h2>
@@ -477,8 +479,6 @@
       <button class="pg-btn" disabled={currentPage === totalPages} on:click={() => currentPage++}>Next →</button>
     </div>
   {/if}
-
-  <svelte:window on:keydown={(e) => { if (e.key === "Escape" && showModal) closeModal(); }} />
 
   {#if showModal && selectedFiling}
     <div class="modal-overlay">

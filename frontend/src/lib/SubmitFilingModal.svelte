@@ -63,13 +63,15 @@
   let proxy_status = $state("");
 
   // ── Company typeahead (New Proposal) ──
+  // Match ignoring spaces/punctuation so "PaloAlto" finds "Palo Alto Networks, Inc."
+  const normName = (s) => (s || "").toString().toLowerCase().replace(/[^a-z0-9]/g, "");
   let companies = $state([]);
   let companiesLoaded = false;
   let showCompanyDd = $state(false);
   let companyResults = $derived(
     company_name.trim().length >= 2
       ? companies
-          .filter((c) => c.company_name.toLowerCase().includes(company_name.toLowerCase()))
+          .filter((c) => normName(c.company_name).includes(normName(company_name)))
           .slice(0, 8)
       : []
   );
@@ -83,11 +85,14 @@
       companies = [];
     }
   }
+  // Suggest next year's AGM: same month/day, year + 1. Works purely on the
+  // YYYY-MM-DD string so it never shifts the day across timezones (toISOString
+  // would convert to UTC and move the day in +offset zones like IST).
   function suggestAgm(d) {
     if (!d) return "";
-    const dt = new Date(d);
-    dt.setFullYear(dt.getFullYear() + 1);
-    return dt.toISOString().slice(0, 10);
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d).slice(0, 10));
+    if (!m) return "";
+    return `${Number(m[1]) + 1}-${m[2]}-${m[3]}`;
   }
   function pickCompany(c) {
     company_name = c.company_name;
@@ -506,7 +511,7 @@
                             onclick={() => pickCompany(c)}
                           >
                             <strong>{c.company_name}</strong>
-                            <small>CIK {c.company_cik}{#if c.meeting_date} · last mtg {fmtDate(c.meeting_date)}{/if}</small>
+                            <small>{#if c.company_cik}CIK {c.company_cik}{:else}On POE · add CIK{/if}{#if c.meeting_date} · last mtg {fmtDate(c.meeting_date)}{/if}</small>
                           </button>
                         {/each}
                         {#if edgarResults.length}
@@ -770,7 +775,7 @@
                   <input value={user?.email ?? ""} readonly />
                 </div>
               </div>
-              <div class="helper">This information is pulled from your POE account registration. To update, visit your account settings.</div>
+              <div class="helper account-note">This information is pulled from your POE account registration. To update, visit your <a href="/dashboard">account settings</a>.</div>
             </div>
           </div>
         {/if}
@@ -913,6 +918,9 @@
   /* "(Optional)" sits inside the uppercase mono field label — inherit case/spacing like the prototype, just lighter */
   .optional { color: var(--g4); font-weight: 400; }
   .helper.muted { color: var(--accent); }
+  /* Filer-info note sits outside a .form-row, so give it the same 12px helper look */
+  .account-note { font-size: 12px; color: var(--g3); line-height: 1.5; margin-top: 4px; }
+  .account-note a { color: var(--blue-light); text-decoration: underline; font-weight: 600; }
   .selected-note { color: var(--green); font-size: 12.5px; font-weight: 600; margin: 8px 0 0; font-family: var(--sans); }
 
   /* readonly / inherited inputs */

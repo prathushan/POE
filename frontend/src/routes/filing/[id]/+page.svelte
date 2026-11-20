@@ -1,6 +1,7 @@
 <script>
   import SubmitFilingModal from "$lib/SubmitFilingModal.svelte";
   import { parseBases } from "$lib/exclusionBases.js";
+  import { cleanFileName } from "$lib/formatDate.js";
 
   let { data } = $props();
   const { record, exempt, noAction, isLegacy } = data;
@@ -132,7 +133,7 @@
         </div>
         <div class="section">
           <h4>WRITTEN MATERIALS</h4>
-          {#if record.pdf_s3_key}<a class="pdf-link" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {record.pdf_filename}</a>{/if}
+          {#if record.pdf_s3_key}<a class="pdf-link" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {cleanFileName(record.pdf_filename)}</a>{/if}
         </div>
         <p class="legacy-note">This exempt solicitation was filed under POE Phase 1 as a standalone record. It is not linked to a parent proposal and has no no-action or proxy-status data.</p>
 
@@ -252,7 +253,7 @@
 
         <div class="mat-box">
           {#if materialTab === "proposal"}
-            {#if record.pdf_s3_key}<a class="pdf-link" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {record.pdf_filename || "Supporting document (PDF)"}</a>{/if}
+            {#if record.pdf_s3_key}<a class="pdf-link" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {cleanFileName(record.pdf_filename) || "Supporting document (PDF)"}</a>{/if}
             {#if record.proposal_text}
               <div class="callout"><div class="callout-label">RESOLVED CLAUSE</div>{record.proposal_text}</div>
             {:else}<p class="muted">See the full proposal PDF above.</p>{/if}
@@ -263,7 +264,7 @@
                 <div>Item Number</div><div>{exempt.item_number || "-"}</div>
                 <div>Form Type</div><div>PX14A6G — Notice of Exempt Solicitation</div>
               </div>
-              {#if exempt.pdf_s3_key}<a class="pdf-link" href={`/${exempt.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {exempt.pdf_filename}</a>{/if}
+              {#if exempt.pdf_s3_key}<a class="pdf-link" href={`/${exempt.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {cleanFileName(exempt.pdf_filename)}</a>{/if}
             {:else}<p class="muted">No exempt solicitation on record</p>{/if}
           {:else}
             {#if noAction}
@@ -271,13 +272,13 @@
                 <div>Exclusion Basis</div>
                 <div>
                   {#if parseBases(noAction.exclusion_basis).length}
-                    <ul class="basis-view">{#each parseBases(noAction.exclusion_basis) as b}<li>{b}</li>{/each}</ul>
+                    <span class="basis-inline">{parseBases(noAction.exclusion_basis).join(", ")}</span>
                   {:else}-{/if}
                 </div>
                 <div>Notice Date</div><div>{fmt(noAction.notice_date)}</div>
               </div>
-              {#if noAction.company_letter_pdf_s3_key}<a class="pdf-link" href={`/${noAction.company_letter_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Company letter — {noAction.company_letter_pdf_filename}</a>{/if}
-              {#if noAction.response_pdf_s3_key}<a class="pdf-link" href={`/${noAction.response_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Proponent response — {noAction.response_pdf_filename}</a>{/if}
+              {#if noAction.company_letter_pdf_s3_key}<a class="pdf-link" href={`/${noAction.company_letter_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Company letter — {cleanFileName(noAction.company_letter_pdf_filename)}</a>{/if}
+              {#if noAction.response_pdf_s3_key}<a class="pdf-link" href={`/${noAction.response_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Proponent response — {cleanFileName(noAction.response_pdf_filename)}</a>{/if}
             {:else}<p class="muted">No no-action filing on record</p>{/if}
           {/if}
         </div>
@@ -291,8 +292,7 @@
 {/if}
 
 <style>
-  .basis-view { margin: 0; padding-left: 16px; }
-  .basis-view li { margin: 2px 0; }
+  .basis-inline { color: #1f2937; line-height: 1.5; }
   .detail-page { background: #eceae4; min-height: 100vh; padding: 30px 16px; }
   .card {
     max-width: 680px; margin: 0 auto; background: #fbfaf7;

@@ -59,7 +59,7 @@ export const GET = async () => {
         subject,
         proposal_topic,
         proposal_text,
-        meeting_date,
+        to_char(meeting_date, 'YYYY-MM-DD') AS meeting_date,
         meeting_date_known,
         proxy_status,
         exclusion_basis,

@@ -7,3 +7,10 @@ export function fmtDate(d) {
   if (isNaN(dt.getTime())) return '—';
   return dt.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
+
+// Uploads are stored as "<Date.now()>-<original name>" (see saveFile). Strip that
+// numeric prefix so viewers see the real filename, e.g.
+// "1794928748745-26.GAP.CE Gap.pdf" -> "26.GAP.CE Gap.pdf".
+export function cleanFileName(name) {
+  return name ? String(name).replace(/^\d{10,}-/, '') : name;
+}

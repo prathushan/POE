@@ -149,26 +149,37 @@
   //   }),
   // );
 
+  // Normalize to lowercase alphanumerics only, so search ignores spaces and
+  // punctuation: "PaloAlto" / "palo alto" both match "Palo Alto Networks, Inc.".
+  const normalize = (s) => (s || "").toString().toLowerCase().replace(/[^a-z0-9]/g, "");
+
   const filteredFilings = $derived.by(() => {
-    const term = search.trim().toLowerCase();
+    const term = normalize(search);
     let filtered = filings.filter((f) => {
       // proposal-centric: only proposals + legacy standalone exempt solicitations
       if (!isIndexRow(f)) return false;
       if (!term) return true;
-      return (
-        companyLabel(f).toLowerCase().includes(term) ||
-        f.filer_name?.toLowerCase().includes(term) ||
-        f.company_cik?.includes(term) ||
-        f.filer_cik?.includes(term) ||
-        topicLabel(f).toLowerCase().includes(term) ||
-        f.proposal_text?.toLowerCase().includes(term) ||
-        f.exclusion_basis?.toLowerCase().includes(term)
-      );
+      return [
+        companyLabel(f),
+        f.filer_name,
+        f.company_cik,
+        f.filer_cik,
+        topicLabel(f),
+        f.proposal_text,
+        f.exclusion_basis,
+      ].some((v) => normalize(v).includes(term));
     });
 
     // default sort: Company A–Z
     const col = sortColumn || "company";
+    // Columns where legacy filings carry no real value ("—"). Keep those rows at
+    // the bottom regardless of sort direction, like the guide.
+    const legacyLastCols = new Set(["exclusion", "no_action"]);
     filtered = [...filtered].sort((a, b) => {
+      if (legacyLastCols.has(col)) {
+        const la = isLegacy(a), lb = isLegacy(b);
+        if (la !== lb) return la ? 1 : -1; // legacy always sorts last
+      }
       const va = colValue(a, col);
       const vb = colValue(b, col);
       let cmp;

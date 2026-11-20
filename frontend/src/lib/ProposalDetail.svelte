@@ -1,5 +1,6 @@
 <script>
   import { parseBases } from "$lib/exclusionBases.js";
+  import { cleanFileName } from "$lib/formatDate.js";
   import SubmitFilingModal from "$lib/SubmitFilingModal.svelte";
 
   let { open = $bindable(false), record = null, exempt = null, noAction = null, user = null } = $props();
@@ -108,7 +109,7 @@
           </div>
           <div class="pd-section">
             <h4>WRITTEN MATERIALS</h4>
-            {#if record.pdf_s3_key}<a class="pd-pdf" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {record.pdf_filename}</a>{:else}<p class="pd-muted">No PDF uploaded</p>{/if}
+            {#if record.pdf_s3_key}<a class="pd-pdf" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {cleanFileName(record.pdf_filename)}</a>{:else}<p class="pd-muted">No PDF uploaded</p>{/if}
           </div>
           <p class="pd-note">This exempt solicitation was filed under POE Phase 1 as a standalone record. It is not linked to a parent proposal and has no no-action or proxy-status data.</p>
 
@@ -160,7 +161,7 @@
           <div class="pd-life">
             <div class="pd-step done"><span class="pd-dot"></span><span class="pd-l">PROPOSAL FILED</span><span class="pd-s">{fmt(record.created_at)}</span></div>
             <div class="pd-step {noAction ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">NO-ACTION</span><span class="pd-s">{noAction ? (noAction.notice_date ? fmt(noAction.notice_date) : "Filed") : "None on record"}</span></div>
-            <div class="pd-step {record.proxy_status ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">EXCLUSION</span><span class="pd-s">{record.proxy_status || "Not yet known"}</span></div>
+            <div class="pd-step {record.proxy_status ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">EXCLUSION</span><span class="pd-s">{record.proxy_status ? record.proxy_status.charAt(0).toUpperCase() + record.proxy_status.slice(1) : "Not yet known"}</span></div>
             <div class="pd-step {exempt ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">EXEMPT SOLICITATION</span><span class="pd-s">{exempt ? "Filed" : "None on record"}</span></div>
             <div class="pd-step {record.meeting_date_known ? 'done' : ''}"><span class="pd-dot"></span><span class="pd-l">{record.meeting_date_known ? "AGM DATE" : "EST. AGM DATE"}</span><span class="pd-s">{fmt(record.meeting_date)}</span></div>
           </div>
@@ -194,7 +195,7 @@
           </div>
           <div class="pd-mat">
             {#if materialTab === "proposal"}
-              {#if record.pdf_s3_key}<a class="pd-pdf" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {record.pdf_filename || "Supporting document (PDF)"}</a>{/if}
+              {#if record.pdf_s3_key}<a class="pd-pdf" href={`/${record.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {cleanFileName(record.pdf_filename) || "Supporting document (PDF)"}</a>{/if}
               {#if record.proposal_text}<div class="pd-callout"><div class="pd-cl">RESOLVED CLAUSE</div>{record.proposal_text}</div>{:else}<p class="pd-muted">See the full proposal PDF above.</p>{/if}
             {:else if materialTab === "exempt"}
               {#if exempt}
@@ -203,7 +204,7 @@
                   <div>Item Number</div><div>{exempt.item_number || "-"}</div>
                   <div>Form Type</div><div>PX14A6G — Notice of Exempt Solicitation</div>
                 </div>
-                {#if exempt.pdf_s3_key}<a class="pd-pdf" href={`/${exempt.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {exempt.pdf_filename}</a>{/if}
+                {#if exempt.pdf_s3_key}<a class="pd-pdf" href={`/${exempt.pdf_s3_key}`} target="_blank" rel="noreferrer">📄 {cleanFileName(exempt.pdf_filename)}</a>{/if}
               {:else}<p class="pd-muted">No exempt solicitation on record</p>{/if}
             {:else}
               {#if noAction}
@@ -211,13 +212,13 @@
                   <div>Exclusion Basis</div>
                   <div>
                     {#if parseBases(noAction.exclusion_basis).length}
-                      <ul class="basis-view">{#each parseBases(noAction.exclusion_basis) as b}<li>{b}</li>{/each}</ul>
+                      <span class="basis-inline">{parseBases(noAction.exclusion_basis).join(", ")}</span>
                     {:else}-{/if}
                   </div>
                   <div>Notice Date</div><div>{fmt(noAction.notice_date)}</div>
                 </div>
-                {#if noAction.company_letter_pdf_s3_key}<a class="pd-pdf" href={`/${noAction.company_letter_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Company letter — {noAction.company_letter_pdf_filename}</a>{/if}
-                {#if noAction.response_pdf_s3_key}<a class="pd-pdf" href={`/${noAction.response_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Proponent response — {noAction.response_pdf_filename}</a>{/if}
+                {#if noAction.company_letter_pdf_s3_key}<a class="pd-pdf" href={`/${noAction.company_letter_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Company letter — {cleanFileName(noAction.company_letter_pdf_filename)}</a>{/if}
+                {#if noAction.response_pdf_s3_key}<a class="pd-pdf" href={`/${noAction.response_pdf_s3_key}`} target="_blank" rel="noreferrer">📄 Proponent response — {cleanFileName(noAction.response_pdf_filename)}</a>{/if}
               {:else}<p class="pd-muted">No no-action filing on record</p>{/if}
             {/if}
           </div>
@@ -345,8 +346,7 @@
 
   .pd-pdf { display: inline-block; background: #fde8e4; color: #b91c1c; padding: 7px 12px; border-radius: 6px; text-decoration: none; margin: 4px 0 10px; font-size: 13px; word-break: break-word; }
   .pd-callout { background: #eef2fb; border-left: 4px solid #27418a; padding: 12px 14px; border-radius: 4px; font-size: 14px; line-height: 1.5; }
-  .basis-view { margin: 0; padding-left: 16px; }
-  .basis-view li { margin: 2px 0; }
+  .basis-inline { color: #1f2937; line-height: 1.5; }
   .pd-cl { font-size: 11px; letter-spacing: 0.04em; color: #27418a; font-weight: 700; margin-bottom: 6px; }
   .pd-note { font-size: 12px; color: #777; background: #f5f3ee; border-radius: 6px; padding: 10px 12px; margin-top: 14px; }
   .pd-section { margin: 14px 0; }

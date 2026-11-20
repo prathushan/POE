@@ -1,11 +1,11 @@
 <script>
   import { onMount } from "svelte";
   import { EXCLUSION_BASES, parseBases } from "$lib/exclusionBases.js";
-  import { fmtDate } from "$lib/formatDate.js";
-  import AdminSubmitModal from "$lib/AdminSubmitModal.svelte";
+  import { fmtDate, cleanFileName } from "$lib/formatDate.js";
+  import { TOPICS } from "$lib/topics.js";
 
-  // "+ Submit Exempt Solicitation" now opens a popup (was a separate /admin/submit page)
-  let showAdminSubmit = $state(false);
+  // The old "+ Submit Exempt Solicitation" pill is hidden for now (A1): it pointed
+  // at the legacy exempt-only submission. Awaiting client approval on the new flow.
 
   let editMode = $state(false);
   let filings = $state([]);
@@ -145,7 +145,42 @@
     vag = p.vote_against ?? "";
     vab = p.vote_abstain ?? "";
     attaching = null;
+    editMode = false;
     showModal = true;
+  }
+
+  // ── Admin inline edit of submission fields (v1.0 parity) ──
+  let originalFiling = null; // snapshot for Cancel
+  function startEdit() {
+    originalFiling = { ...selectedFiling };
+    editMode = true;
+    loadEditCompanies();
+  }
+  function cancelEdit() {
+    if (originalFiling) selectedFiling = { ...originalFiling };
+    editMode = false;
+    editCompanyDd = false;
+  }
+
+  // Company typeahead for the proposal edit — same behaviour as the filing form
+  // (type → pick an existing company → CIK auto-fills).
+  let editCompanies = $state([]);
+  let editCompanyDd = $state(false);
+  const normName = (s) => (s || "").toString().toLowerCase().replace(/[^a-z0-9]/g, "");
+  async function loadEditCompanies() {
+    if (editCompanies.length) return;
+    try { const r = await fetch("/api/filings/companies"); editCompanies = r.ok ? await r.json() : []; }
+    catch { editCompanies = []; }
+  }
+  const editCompanyResults = $derived(
+    selectedFiling && (selectedFiling.company_name || "").trim().length >= 2
+      ? editCompanies.filter((c) => normName(c.company_name).includes(normName(selectedFiling.company_name))).slice(0, 8)
+      : []
+  );
+  function pickEditCompany(c) {
+    selectedFiling.company_name = c.company_name;
+    selectedFiling.company_cik = c.company_cik || "";
+    editCompanyDd = false;
   }
 
   async function saveVotes(proposalId) {
@@ -212,6 +247,7 @@
     showModal = false;
     selectedFiling = null;
     adminNote = "";
+    editMode = false;
   }
   async function deleteFiling(id) {
     const confirmDelete = confirm("Are you sure?");
@@ -377,12 +413,15 @@
     <div class:active={activeTab === "all"} on:click={() => setTab("all")}>
       ALL PROPOSALS
     </div>
+    <!-- A1: old exempt-only submission pill hidden pending client approval of the new flow.
     <button
       class="admin-submit-btn"
       on:click={() => (showAdminSubmit = true)}
     >
       + Submit Exempt Solicitation
     </button>
+    -->
+
   </div>
 
   <!-- SEARCH + ATTACHMENT FILTER -->
@@ -503,7 +542,7 @@
               {selectedFiling?.accession_number?.split("-")[0]}
             </div> -->
 
-            <div class="status-tag">{selectedFiling.status}</div>
+            <span class="status {selectedFiling.status}">{selectedFiling.status}</span>
           </div>
           <!-- <h2 class="main-title">
             Proxy Memo — {selectedFiling.subject}
@@ -515,19 +554,19 @@
             <div class="section">
               <h4>PROXY INFORMATION</h4>
               <div class="grid">
-                <div>Company</div><div>{selectedFiling.memo_submitter || "-"}</div>
-                <div>DEF 14A Filing</div><div>{#if selectedFiling.def14a_link}<a href={selectedFiling.def14a_link} target="_blank">{selectedFiling.def14a_link}</a>{:else}-{/if}</div>
-                <div>Proposal Item</div><div>{selectedFiling.item_number || "-"}</div>
-                <div>Topic</div><div>{selectedFiling.subject || "-"}</div>
-                <div>Organization</div><div>{selectedFiling.company_name || "-"}</div>
-                <div>Organization CIK</div><div>{selectedFiling.company_cik || "-"}</div>
-                <div>Contact</div><div>{selectedFiling.contact_name || "-"} · {selectedFiling.contact_email || "-"}</div>
+                <div>Topic</div><div>{#if editMode}<input class="edit-input" bind:value={selectedFiling.subject} />{:else}{selectedFiling.subject || "-"}{/if}</div>
+                <div>Company</div><div>{#if editMode}<input class="edit-input" bind:value={selectedFiling.memo_submitter} />{:else}{selectedFiling.memo_submitter || "-"}{/if}</div>
+                <div>DEF 14A Filing</div><div>{#if editMode}<input class="edit-input" bind:value={selectedFiling.def14a_link} />{:else}{#if selectedFiling.def14a_link}<a href={selectedFiling.def14a_link} target="_blank">{selectedFiling.def14a_link}</a>{:else}-{/if}{/if}</div>
+                <div>Proposal Item</div><div>{#if editMode}<input class="edit-input" bind:value={selectedFiling.item_number} />{:else}{selectedFiling.item_number || "-"}{/if}</div>
+                <div>Organization</div><div>{#if editMode}<input class="edit-input" bind:value={selectedFiling.company_name} />{:else}{selectedFiling.company_name || "-"}{/if}</div>
+                <div>Organization CIK</div><div>{#if editMode}<input class="edit-input" bind:value={selectedFiling.company_cik} />{:else}{selectedFiling.company_cik || "-"}{/if}</div>
+                <div>Contact</div><div>{#if editMode}<input class="edit-input" bind:value={selectedFiling.contact_name} />{:else}{selectedFiling.contact_name || "-"} · {selectedFiling.contact_email || "-"}{/if}</div>
               </div>
             </div>
             <div class="section">
               <h4>WRITTEN MATERIALS</h4>
               {#if selectedFiling.pdf_s3_key}
-                <a class="pdf-link" href={`/${selectedFiling.pdf_s3_key}`} target="_blank">📄 {selectedFiling.pdf_filename}</a>
+                <a class="pdf-link" href={`/${selectedFiling.pdf_s3_key}`} target="_blank">📄 {cleanFileName(selectedFiling.pdf_filename)}</a>
               {:else}<p class="muted">No PDF uploaded</p>{/if}
             </div>
 
@@ -551,7 +590,7 @@
               </div>
               <div class="step {pv.proxy_status ? 'done' : ''}">
                 <span class="dot"></span><span class="step-label">EXCLUSION</span>
-                <span class="step-sub">{pv.proxy_status || "Not yet known"}</span>
+                <span class="step-sub">{pv.proxy_status ? pv.proxy_status.charAt(0).toUpperCase() + pv.proxy_status.slice(1) : "Not yet known"}</span>
               </div>
               <div class="step {es ? 'done' : ''}">
                 <span class="dot"></span><span class="step-label">EXEMPT SOLICITATION</span>
@@ -567,10 +606,31 @@
               <div>
                 <h4>COMPANY</h4>
                 <div class="grid">
-                  <div>Company</div><div>{pv.company_name || "-"}</div>
-                  <div>Registrant CIK</div><div>{pv.company_cik || "-"}</div>
-                  <div>Proposal Topic</div><div>{#if pv.proposal_topic}<span class="topic-chip">{pv.proposal_topic}</span>{:else}-{/if}</div>
-                  <div>Annual Meeting</div><div>{pv.meeting_date ? fmtDate(pv.meeting_date) : "-"} <span class="muted">{pv.meeting_date_known ? "Confirmed" : "Estimated"}</span></div>
+                  <div>Company</div><div>{#if editMode}
+                    <div class="company-ta">
+                      <input class="edit-input" bind:value={pv.company_name} autocomplete="off"
+                        on:input={() => (editCompanyDd = true)} on:focus={() => (editCompanyDd = true)}
+                        on:blur={() => setTimeout(() => (editCompanyDd = false), 180)} />
+                      {#if editCompanyDd && editCompanyResults.length}
+                        <div class="company-ta-dd">
+                          {#each editCompanyResults as c}
+                            <button type="button" class="ta-item" on:mousedown={(e) => { e.preventDefault(); pickEditCompany(c); }}>
+                              <strong>{c.company_name}</strong>
+                              <small>{#if c.company_cik}CIK {c.company_cik}{:else}On POE · add CIK{/if}</small>
+                            </button>
+                          {/each}
+                        </div>
+                      {/if}
+                    </div>
+                  {:else}{pv.company_name || "-"}{/if}</div>
+                  <div>Registrant CIK</div><div>{#if editMode}<input class="edit-input" bind:value={pv.company_cik} placeholder="10-digit CIK" />{:else}{pv.company_cik || "-"}{/if}</div>
+                  <div>Proposal Topic</div><div>{#if editMode}
+                    <select class="edit-input" bind:value={pv.proposal_topic}>
+                      {#if pv.proposal_topic && !TOPICS.includes(pv.proposal_topic)}<option value={pv.proposal_topic}>{pv.proposal_topic}</option>{/if}
+                      {#each TOPICS as t}<option value={t}>{t}</option>{/each}
+                    </select>
+                  {:else}{#if pv.proposal_topic}<span class="topic-chip">{pv.proposal_topic}</span>{:else}-{/if}{/if}</div>
+                  <div>Annual Meeting</div><div>{#if editMode}<span class="edit-meeting"><input type="date" class="edit-input" bind:value={pv.meeting_date} /><select class="edit-input" bind:value={pv.meeting_date_known}><option value={false}>Estimated</option><option value={true}>Known</option></select></span>{:else}{pv.meeting_date ? fmtDate(pv.meeting_date) : "-"} <span class="muted">{pv.meeting_date_known ? "Confirmed" : "Estimated"}</span>{/if}</div>
                   <div>Proxy Preview 2027</div><div>{#if pv.proxy_preview_interest}<span class="pp-interest">★ Interested</span>{:else}<span class="muted">Not interested</span>{/if}</div>
                 </div>
               </div>
@@ -595,8 +655,8 @@
 
               {#if materialTab === "proposal"}
                 <div class="mat-body">
-                  {#if pv.pdf_s3_key}<a class="pdf-link" href={`/${pv.pdf_s3_key}`} target="_blank">📄 {pv.pdf_filename || "Supporting document (PDF)"}</a>{/if}
-                  {#if pv.proposal_text}<div class="callout"><div class="callout-label">RESOLVED CLAUSE</div>{pv.proposal_text}</div>{:else}<p class="muted">See the full proposal PDF above.</p>{/if}
+                  {#if pv.pdf_s3_key}<a class="pdf-link" href={`/${pv.pdf_s3_key}`} target="_blank">📄 {cleanFileName(pv.pdf_filename) || "Supporting document (PDF)"}</a>{/if}
+                  {#if editMode}<div class="callout"><div class="callout-label">RESOLVED CLAUSE</div><textarea class="edit-input edit-textarea" bind:value={pv.proposal_text} placeholder="Resolved: …"></textarea></div>{:else if pv.proposal_text}<div class="callout"><div class="callout-label">RESOLVED CLAUSE</div>{pv.proposal_text}</div>{:else}<p class="muted">See the full proposal PDF above.</p>{/if}
                 </div>
               {:else if materialTab === "exempt"}
                 <div class="mat-body">
@@ -607,7 +667,7 @@
                       <div>Form Type</div><div>PX14A6G — Notice of Exempt Solicitation</div>
                       <div>Status</div><div>{es.status}</div>
                     </div>
-                    {#if es.pdf_s3_key}<a class="pdf-link" href={`/${es.pdf_s3_key}`} target="_blank">📄 {es.pdf_filename}</a>{/if}
+                    {#if es.pdf_s3_key}<a class="pdf-link" href={`/${es.pdf_s3_key}`} target="_blank">📄 {cleanFileName(es.pdf_filename)}</a>{/if}
                     <div class="remove-row">
                       <button class="remove-doc" on:click={() => removeAttachment(es.id, "exempt")}>
                         ✕ Remove exempt solicitation
@@ -641,14 +701,14 @@
                       <div>Exclusion Basis</div>
                       <div>
                         {#if parseBases(na.exclusion_basis).length}
-                          <ul class="basis-view">{#each parseBases(na.exclusion_basis) as b}<li>{b}</li>{/each}</ul>
+                          <span class="basis-inline">{parseBases(na.exclusion_basis).join(", ")}</span>
                         {:else}-{/if}
                       </div>
                       <div>Notice Date</div><div>{na.notice_date ? fmtDate(na.notice_date) : "-"}</div>
                       <div>Status</div><div>{na.status}</div>
                     </div>
-                    {#if na.company_letter_pdf_s3_key}<a class="pdf-link" href={`/${na.company_letter_pdf_s3_key}`} target="_blank">📄 Company letter — {na.company_letter_pdf_filename}</a>{/if}
-                    {#if na.response_pdf_s3_key}<a class="pdf-link" href={`/${na.response_pdf_s3_key}`} target="_blank">📄 Proponent response — {na.response_pdf_filename}</a>{/if}
+                    {#if na.company_letter_pdf_s3_key}<a class="pdf-link" href={`/${na.company_letter_pdf_s3_key}`} target="_blank">📄 Company letter — {cleanFileName(na.company_letter_pdf_filename)}</a>{/if}
+                    {#if na.response_pdf_s3_key}<a class="pdf-link" href={`/${na.response_pdf_s3_key}`} target="_blank">📄 Proponent response — {cleanFileName(na.response_pdf_filename)}</a>{/if}
                     <div class="remove-row">
                       <button class="remove-doc" on:click={() => removeAttachment(na.id, "no_action")}>
                         ✕ Remove no-action / exclusion
@@ -706,7 +766,7 @@
                   <div class="vote-field"><input type="number" min="0" max="100" step="1" placeholder="0.00" bind:value={vag} /><span class="pct">%</span></div>
                 </div>
                 <div class="vote-cell c-abstain">
-                  <label>Abstain</label>
+                  <label>Independent</label>
                   <div class="vote-field"><input type="number" min="0" max="100" step="1" placeholder="0.00" bind:value={vab} /><span class="pct">%</span></div>
                 </div>
               </div>
@@ -741,6 +801,12 @@
 
         <!-- FOOTER -->
         <div class="modal-footer">
+          {#if editMode}
+            <button class="edit-cancel" on:click={cancelEdit}>Cancel</button>
+            <button class="edit-save" on:click={saveEdit}>Save changes</button>
+          {:else}
+            <button class="edit-btn" on:click={startEdit}>✎ Edit</button>
+          {/if}
           <button
             class="approve"
             on:click={() => updateStatus(selectedFiling.id, "approved")}
@@ -760,8 +826,9 @@
   {/if}
 </div>
 
-<!-- Admin "Submit Exempt Solicitation" popup (replaces the old /admin/submit page) -->
+<!-- Admin "Submit Exempt Solicitation" popup hidden for now (A1) — awaiting client approval.
 <AdminSubmitModal bind:open={showAdminSubmit} />
+-->
 
 <style>
   body {
@@ -1115,20 +1182,49 @@
     gap: 10px;
   }
 
+  /* ── inline admin edit ── */
+  .edit-input {
+    width: 100%; font-family: var(--sans) !important; font-size: 13.5px;
+    padding: 6px 9px; border: 1.5px solid var(--g2); border-radius: 4px;
+    background: #fff; color: var(--ink);
+  }
+  .edit-input:focus { outline: none; border-color: var(--blue-light); }
+  .edit-textarea { min-height: 84px; resize: vertical; line-height: 1.5; margin-top: 4px; }
+  .edit-meeting { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .edit-meeting .edit-input { width: auto; }
+  .company-ta { position: relative; }
+  .company-ta-dd {
+    position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 30;
+    background: #fff; border: 1.5px solid var(--blue-light); border-radius: 4px;
+    box-shadow: var(--shadow-lg); max-height: 220px; overflow-y: auto;
+  }
+  .company-ta-dd .ta-item {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    padding: 8px 10px; background: none; border: none; border-bottom: 1px solid var(--g1);
+    font-family: var(--sans) !important;
+  }
+  .company-ta-dd .ta-item:last-child { border-bottom: none; }
+  .company-ta-dd .ta-item:hover { background: var(--paper); }
+  .company-ta-dd .ta-item strong { display: block; color: var(--blue); font-size: 13px; }
+  .company-ta-dd .ta-item small { color: var(--g4); font-family: var(--mono); font-size: 11px; }
+  .modal-footer .edit-btn,
+  .modal-footer .edit-save,
+  .modal-footer .edit-cancel {
+    padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;
+    font-family: var(--sans) !important;
+  }
+  .modal-footer .edit-btn { background: #fff; border: 1px solid var(--blue); color: var(--blue); margin-right: auto; }
+  .modal-footer .edit-btn:hover { background: #eef2fb; }
+  .modal-footer .edit-save { background: var(--blue); border: 1px solid var(--blue); color: #fff; margin-right: auto; }
+  .modal-footer .edit-save:hover { background: var(--blue-light); }
+  .modal-footer .edit-cancel { background: #fff; border: 1px solid var(--g2); color: var(--g5); }
+  .modal-footer .edit-cancel:hover { background: var(--paper-warm); }
+
   .status-row {
     display: flex !important;
     justify-content: flex-end !important;
     width: 100% !important;
   }
-  .status-tag {
-    background: #fef3c7;
-    color: #92400e;
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-  }
-
   .section {
     margin-top: 15px;
   }
@@ -1407,8 +1503,7 @@
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   }
   .basis-text strong { color: #1a3a5c; font-weight: 700; }
-  .basis-view { margin: 0; padding-left: 16px; }
-  .basis-view li { margin: 2px 0; }
+  .basis-inline { color: #1f2937; line-height: 1.5; }
   .req { color: #c53030; }
   .attach-actions { display: flex; gap: 10px; margin-top: 14px; }
   .attach-save {
@@ -1432,9 +1527,9 @@
     display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
     margin-bottom: 16px;
   }
-  /* match the other modal headings (e.g. "Written Materials"): mono bold navy */
+  /* match the "Written Materials" heading exactly: Georgia serif, navy */
   .vote-title {
-    font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--blue);
+    font-family: Georgia, "Times New Roman", serif !important; font-size: 18px; font-weight: 400; color: #1a3a5c;
     text-transform: none; letter-spacing: 0;
   }
   .vote-divider { width: 1px; height: 15px; background: var(--g2); }
@@ -1483,6 +1578,7 @@
 
   .vote-foot { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
   .vote-save {
+    order: 3; margin-left: auto; /* push Save button to the right */
     display: inline-flex; align-items: center; gap: 8px;
     background: var(--blue); color: #fff; border: none;
     padding: 11px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;
@@ -1490,8 +1586,9 @@
   }
   .vote-save:hover { background: var(--blue-light); }
   .vote-save svg { display: block; }
-  .vote-foot-divider { width: 1px; height: 20px; background: var(--g2); }
+  .vote-foot-divider { display: none; }
   .vote-foot-note {
+    order: 1; /* keep the note on the left */
     display: inline-flex; align-items: center; gap: 8px;
     font-family: var(--sans) !important; font-size: 12.5px; color: var(--g4);
   }

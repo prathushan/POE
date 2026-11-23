@@ -5,6 +5,22 @@
 
 ---
 
+## 🚀 Staging deploy procedure (AWS)
+- **Branch that staging builds from: `phase2`** (NOT `main` — local `main` is a stale, messy dual-layout branch; ignore it). On `origin/phase2` the app lives under a `frontend/` subdir.
+- **Deploy from the local Mac:** commit the work and push to `phase2`:
+  ```
+  git add . && git commit -m "..." && git push -u origin phase2
+  ```
+  (svelte.config.js must be on **adapter-node** in the commit — phase2 already is.)
+- **Deploy on the AWS box** (SSH in, then):
+  ```
+  cd ~/POE-staging/frontend && git fetch origin && git reset --hard origin/phase2 && npm install && npm run build && pm2 restart poe-staging
+  ```
+  `~/POE-staging` is the git root; `frontend/` is the app dir; pm2 process is **`poe-staging`**.
+- **Live staging URL:** http://staging.3.209.207.63.nip.io/
+- **Safe across reset --hard:** `.env` (gitignored → server DB/SMTP config preserved).
+- **⚠️ WIPED by reset --hard:** `static/uploads/` IS tracked in git (65 PDFs committed) and is NOT gitignored → any PDF uploaded through the live staging site since the last commit is deleted on deploy, leaving broken 📄 links. Fix later: gitignore `static/uploads/` or move to real S3.
+
 ## ⚠️ Critical workflow rules (do NOT break)
 - **I (Claude) do NOT push to git.** The user commits / pushes / deploys to AWS staging themselves.
 - **Do NOT run `git reset --hard` or `git checkout` on the Mac.** Server-side DB resets are fine.

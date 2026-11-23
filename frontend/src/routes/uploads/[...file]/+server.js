@@ -2,11 +2,16 @@ import { error } from '@sveltejs/kit';
 import fs from 'fs';
 import path from 'path';
 
-// Uploaded PDFs are written to static/uploads at runtime. On the adapter-node
+// Uploaded PDFs are written to UPLOAD_DIR at runtime. On the adapter-node
 // build, static assets are served from build/client (copied at build time), so
 // files uploaded AFTER the build 404 when served statically. This route reads
 // them from the live uploads directory instead, so /uploads/<file> always works.
-const UPLOAD_DIR = path.resolve('static/uploads');
+//
+// UPLOAD_DIR must match the create endpoint. On staging/prod it is a persistent
+// path outside the repo; in dev it defaults to static/uploads. We also fall back
+// to the in-repo static/uploads so committed seed PDFs keep serving.
+const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || 'static/uploads');
+const SEED_DIR = path.resolve('static/uploads');
 
 const TYPES = {
   '.pdf': 'application/pdf',
@@ -16,11 +21,19 @@ const TYPES = {
   '.gif': 'image/gif',
 };
 
+// Resolve a request path to a real file inside one of the allowed dirs, or null.
+function resolveInDir(dir, name) {
+  const filepath = path.resolve(dir, name);
+  if (!filepath.startsWith(dir + path.sep)) return null; // traversal guard
+  if (!fs.existsSync(filepath) || !fs.statSync(filepath).isFile()) return null;
+  return filepath;
+}
+
 export async function GET({ params }) {
-  // params.file is everything after /uploads/ — normalise and block traversal.
-  const rel = (params.file || '').replace(/\\/g, '/');
-  const filepath = path.resolve(UPLOAD_DIR, rel);
-  if (!filepath.startsWith(UPLOAD_DIR + path.sep) || !fs.existsSync(filepath) || !fs.statSync(filepath).isFile()) {
+  // Keys are flat (uploads/<filename>); use the basename and block traversal.
+  const name = path.basename((params.file || '').replace(/\\/g, '/'));
+  const filepath = resolveInDir(UPLOAD_DIR, name) || resolveInDir(SEED_DIR, name);
+  if (!filepath) {
     throw error(404, 'File not found');
   }
 

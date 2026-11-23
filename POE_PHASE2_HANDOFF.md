@@ -104,3 +104,41 @@ Created via the real submission flow during testing (safe to delete): Meridian P
 2. Read this file first. Confirm `.env` DATABASE_URL points at the local `poe_dev` clone.
 3. `npm run dev`; verify http://localhost:5173 loads.
 4. Pick up from Pending (§4) or the next client change. For client UI tweaks, edit the files in §6 and verify in the browser.
+
+---
+
+## 2026-11-24 — Client bug fixes (attach dropdown, owner panel, PDFs)
+
+### Bug 1 & 2: proposals not showing on attach + owner "Your proposal" panel missing
+**Root cause:** seeded/legacy proposals have `filer_user_id = NULL` (or not matching the
+signed-in user). Both the attach dropdown (`/api/filings/my-proposals`) and the detail-page
+owner panel (`isOwner`) matched strictly on `filer_user_id`, so the owning org saw neither.
+**Fix (code, verified on clone):**
+- `src/routes/api/filings/my-proposals/+server.js` — match `filer_user_id = $1` OR
+  (`filer_user_id IS NULL` AND `LOWER(TRIM(filer_name)) = LOWER(TRIM(org_name))`).
+- `src/routes/filing/[id]/+page.svelte` — `isOwner` gains the same org-name fallback.
+- `migrations/005_backfill_filer_user_id.sql` — permanently links unlinked proposals by
+  matching filer_name → users.org_name (only when exactly one user matches). Run on staging+prod.
+Verified: with proposal 281 set to filer_user_id=NULL, it vanished from the dropdown and the
+owner panel disappeared; after the fallback it reappears in both. Test data restored.
+
+### Bug 3: "Still getting an error on the pdfs"
+**Diagnosed on staging (http://staging.3.209.207.63.nip.io):** 155 of 160 PDF references
+return 404; only the 5 most-recent uploads serve. The files are physically gone.
+**Root cause:** `static/uploads/` lives inside the git tree, and the deploy
+(`git reset --hard origin/phase2`) wipes PDFs uploaded through the live site. Only files
+uploaded since the last deploy survive.
+**Fix (code, verified on clone):** decouple uploads from the repo.
+- `src/routes/api/filings/create/+server.js` — `UPLOAD_DIR = process.env.UPLOAD_DIR || 'static/uploads'`;
+  stored key is now always the stable URL path `uploads/<filename>`.
+- `src/routes/uploads/[...file]/+server.js` — serves from `process.env.UPLOAD_DIR` first,
+  falls back to in-repo `static/uploads` (seed files), basename-only + traversal guard.
+**DEPLOY STEPS REQUIRED (without these the fix does nothing):**
+1. Deploy phase2 with the code above.
+2. On the staging/prod server set `UPLOAD_DIR` to a PERSISTENT path OUTSIDE the repo,
+   e.g. `/home/ubuntu/poe-uploads`, in the server `.env`. Create the dir, `mkdir -p`.
+3. This dir must NOT be inside `~/POE-staging` (so `reset --hard` never touches it).
+4. Run `migrations/005_backfill_filer_user_id.sql` on staging + prod DBs.
+**Unrecoverable:** the 155 already-deleted files are gone (0 exist in local static/uploads).
+They must be re-uploaded or restored from a backup of staging's old uploads dir / the client's
+originals. Code cannot resurrect deleted bytes.

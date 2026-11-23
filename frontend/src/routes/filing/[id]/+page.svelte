@@ -6,7 +6,16 @@
   let { data } = $props();
   const { record, exempt, noAction, isLegacy } = data;
   const user = data.user;
-  const isOwner = !!(user && record && user.id === record.filer_user_id);
+  // Owner = the user who filed it (filer_user_id), with a fallback to the org
+  // identity for proposals whose filer_user_id was never linked (seeded/imported
+  // rows) so the owning org still gets its "Your proposal" controls.
+  const norm = (s) => (s || "").trim().toLowerCase();
+  const isOwner = !!(
+    user &&
+    record &&
+    (user.id === record.filer_user_id ||
+      (record.filer_user_id == null && norm(user.org_name) !== "" && norm(user.org_name) === norm(record.filer_name)))
+  );
 
   // ── social share preview (OpenGraph / Twitter) ──
   // Canonical public site so crawlers (LinkedIn/Facebook/X) always get a

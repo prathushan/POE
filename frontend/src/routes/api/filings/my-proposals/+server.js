@@ -12,16 +12,23 @@ export const GET = async ({ locals, url }) => {
   const all = url.searchParams.get('all') === '1' || url.searchParams.get('all') === 'true';
 
   try {
+    // Match the user's own proposals by filer_user_id. Fall back to the org
+    // identity for rows whose filer_user_id was never linked (e.g. seeded or
+    // imported proposals) so the owning org can still attach / update them.
+    const org = user.org_name || '';
     const result = await pool.query(
       `SELECT id, company_name, company_cik, proposal_topic, proposal_text,
               to_char(meeting_date, 'YYYY-MM-DD') AS meeting_date, meeting_date_known, proxy_status, status,
               pdf_filename, created_at, has_no_action, has_exempt_solicitation
          FROM filings
         WHERE filing_type = 'proposal'
-          AND filer_user_id = $1
+          AND (
+                filer_user_id = $1
+                OR (filer_user_id IS NULL AND $2 <> '' AND LOWER(TRIM(filer_name)) = LOWER(TRIM($2)))
+              )
           ${all ? '' : "AND LOWER(status) = 'approved'"}
         ORDER BY company_name ASC`,
-      [user.id]
+      [user.id, org]
     );
     return json(result.rows);
   } catch (err) {

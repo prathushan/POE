@@ -3,9 +3,15 @@ import pool from '$lib/server/db';
 import fs from 'fs';
 import path from 'path';
 
-const UPLOAD_DIR = 'static/uploads';
+// Where uploaded files are written. On staging/prod set UPLOAD_DIR to a
+// persistent path OUTSIDE the repo (e.g. /var/poe/uploads) so a redeploy
+// (`git reset --hard`) can't wipe files uploaded through the live site — the
+// cause of broken 📄 links after deploys. Defaults to static/uploads for dev.
+const UPLOAD_DIR = process.env.UPLOAD_DIR || 'static/uploads';
 
-// Save an uploaded File to static/uploads and return { key, filename }.
+// Save an uploaded File and return { key, filename }. The key is always the
+// stable URL path (uploads/<filename>), independent of the physical directory,
+// so it is served by src/routes/uploads/[...file] regardless of UPLOAD_DIR.
 function saveFile(file) {
   if (!file || typeof file === 'string' || file.size === 0) return { key: null, filename: null };
   if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -13,7 +19,7 @@ function saveFile(file) {
   const filepath = path.join(UPLOAD_DIR, filename);
   return file.arrayBuffer().then((buf) => {
     fs.writeFileSync(filepath, Buffer.from(buf));
-    return { key: filepath.replace('static/', ''), filename };
+    return { key: 'uploads/' + filename, filename };
   });
 }
 

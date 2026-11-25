@@ -6,12 +6,12 @@
 <div class="terms-container">
 
   <h1>Terms of Use</h1>
-  <p class="updated">Last updated: February 25, 2026</p>
+  <p class="updated">Last updated: December 1, 2026</p>
 
   <section>
     <h2>1. Acceptance of Terms</h2>
     <p>
-      By accessing or using the Proxy Open Exchange ("POE," "the Platform"), you agree to be bound by these Terms of Use. 
+      By accessing or using the Proxy Open Exchange ("POE," "the Platform"), you agree to be bound by these Terms of Use.
       POE is operated by As You Sow ("Operator"), a 501(c)(3) nonprofit organization.
     </p>
   </section>
@@ -19,40 +19,43 @@
   <section>
     <h2>2. Purpose of the Platform</h2>
     <p>
-      POE is a community-driven, open-access platform for the publication of exempt solicitations related to shareholder proposals. 
-      POE is not affiliated with, endorsed by, or part of the SEC or EDGAR. Filings published on POE are not SEC filings.
+      POE is a community-driven, open-access platform for the publication of shareholder proposals and related materials, including no-action notices, proxy-statement outcomes, and exempt solicitations.
+      POE is not affiliated with, endorsed by, or part of the SEC or EDGAR filing system. Filings made on POE are voluntary, not SEC required filings.
     </p>
   </section>
 
   <section>
     <h2>3. User Accounts and Verification</h2>
     <p>
-      To submit a proxy memo, users must create an account verified through their organization's CIK and a matching organizational email domain.
+      To submit a filing, users must create an account verified through their CIK number and a matching organizational or individual email domain. The organization name, CIK, and contact details you register are used to populate the filer information on each submission. By filing on POE, you represent and warrant that:
     </p>
     <ul>
-      <li>You are authorized to act on behalf of the organization you register</li>
+      <li>You are authorized to submit on behalf of the organization or as an approved individual when noted when you registered</li>
       <li>All information you provide is accurate and current</li>
       <li>You will maintain the confidentiality of your account credentials</li>
     </ul>
   </section>
 
   <section>
-    <h2>4. Submitting Proxy Memos</h2>
-    <p>By submitting a proxy memo to POE, you represent and warrant that:</p>
+    <h2>4. Submitting Filings</h2>
+    <p>By submitting a shareholder proposal, no-action notice, or exempt solicitation to POE, you represent and warrant that:</p>
     <ul>
+      <li>You are authorized to act on behalf of the organization you register</li>
       <li>You have the authority to submit materials on behalf of the named proponent</li>
-      <li>The submitted materials are accurate and comply with applicable securities laws</li>
+      <li>The submitted materials are accurate, current, and comply with applicable securities laws</li>
       <li>
-        You grant POE a non-exclusive, royalty-free license to publish and distribute materials under 
+        You grant POE a non-exclusive, royalty-free license to publish and distribute materials under
         Creative Commons Attribution 4.0 (CC BY 4.0)
       </li>
+      <li>Documents you attach to a proposal will be published immediately, without prior POE administrator approval; all documents submitted are subject to content moderation review (Section 7)</li>
+      <li>You will update the proxy status of your proposal once the company's definitive proxy statement is published or allow the administrator to do so.</li>
     </ul>
   </section>
 
   <section>
     <h2>5. Disclaimer of Liability</h2>
     <p class="highlight">
-      THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE." The Operator and all associated parties disclaim all warranties.
+      THE POE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE." The Operator and all associated parties disclaim all warranties.
     </p>
     <p>
       In no event shall the Operator be liable for damages arising from use of the Platform, including errors, omissions, or reliance on content.
@@ -60,16 +63,16 @@
   </section>
 
   <section>
-    <h2>6. Indemnification</h2>
+    <h2>6. Hold Harmless</h2>
     <p>
-      You agree to indemnify and hold harmless the Operator and affiliated organizations from any claims arising from your use of the Platform or submissions.
+      You agree to hold harmless the Operator and its affiliated organizations from any claims, damages, losses, liabilities or expenses arising from your use of the Platform, your submissions, or your violation of these Terms.
     </p>
   </section>
 
   <section>
     <h2>7. Content Moderation</h2>
     <p>
-      POE reserves the right to review, approve, reject, or remove any filing at its sole discretion.
+      POE reserves the right to review, approve, reject, or remove any filing or attached document that does not conform with the requirements of the site. New shareholder proposals are reviewed before publication. Documents attached to an approved proposal by its original filer are published on submission and may be removed after the fact.
     </p>
   </section>
 
@@ -90,7 +93,7 @@
   <section>
     <h2>10. Limitation of Liability for Participating Organizations</h2>
     <p>
-      Organizations submitting filings are solely responsible for their content. Other organizations and the Operator are not liable.
+      Organizations submitting filings are solely responsible for their content. Other organizations and POE Operators are not liable.
     </p>
   </section>
 
@@ -105,8 +108,6 @@
     <h2>12. Contact</h2>
     <p>
       As You Sow<br>
-      11461 San Pablo Ave, Suite 400<br>
-      El Cerrito, CA 94530<br>
       Email: info@asyousow.org
     </p>
   </section>

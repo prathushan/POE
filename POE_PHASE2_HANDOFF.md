@@ -142,3 +142,60 @@ uploaded since the last deploy survive.
 **Unrecoverable:** the 155 already-deleted files are gone (0 exist in local static/uploads).
 They must be re-uploaded or restored from a backup of staging's old uploads dir / the client's
 originals. Code cannot resurrect deleted bytes.
+
+### RESOLVED on staging (2026-11-24)
+- Recovered all 155 wiped files by downloading from prod's public /uploads endpoint into
+  the staging box's `/home/ubuntu/poe-uploads` (prod still held every file; staging DB is a
+  prod clone so names matched 1:1).
+- Root fix: `UPLOAD_DIR=/home/ubuntu/poe-uploads` in staging .env, BUT a plain `pm2 restart`
+  does NOT load it — the running process lacked the var. Fixed with:
+  `export UPLOAD_DIR=/home/ubuntu/poe-uploads && pm2 restart poe-staging --update-env && pm2 save`.
+- Verified: staging /api/filings/public → 160/160 PDF refs serve 200, 0 broken.
+- pm2 layout: `poe-app` (id 1, :3000) = PROD; `poe-staging` (id 2, :3001) = STAGING.
+- TODO for PROD deploy: prod has the SAME latent wipe risk (uploads in repo tree). When
+  deploying this code to prod: set UPLOAD_DIR to a persistent path, move prod's existing
+  static/uploads into it, then `pm2 restart poe-app --update-env && pm2 save`. Prod is the
+  top recovery source — do NOT let it get wiped.
+
+---
+
+## 2026-11-25 — V2 Website Copy revision (client doc: POE_Website_Copy_V1_to_V2.docx)
+Implemented the client's full V1→V2 copy spec across the site (verified live on local dev):
+- **+layout.svelte**: tagline → "Shareholder Proposal Publishing Platform"; primary + footer buttons → "Submit a Filing"; footer "Browse Proposals"; footer brand paragraph expanded; Resources + "Rule 14a-8 (Shareholder Proposals)" link; copyright → "All filings published under CC BY 4.0".
+- **+page.svelte (home)**: result count → "proposals"; empty state "No approved proposals yet"; **removed public Pending stat** from Proposal Tracker (kept in admin, per doc §2 note); Resources sidebar + Rule 14a-8. (Search/columns/headings were already V2.)
+- **about/+page.svelte**: full V2 rewrite (intro, "What you can publish on POE" 4-item list, "Why POE Exists" para, verification incl. attach/proxy-status line, Rule 14a-8 reference).
+- **terms/+page.svelte**: §2, §3 (+filer-info line), §4 "Submitting Filings" (+2 warranties), §7 content moderation.
+- **signup/login**: intro + subheading reworded.
+- **SubmitFilingModal.svelte**: added V2 Welcome notice; added Proxy Preview 2027 line to the proposal confirmation popup.
+- **admin/dashboard**: title "Admin Dashboard"; stats → Pending·Approved·Proposals·No-Action·Exempt Sol; added approve toast "Approved: [Company] proposal is now public."
+- Annotated doc with per-section Word comments + a doubts list saved to Desktop: "POE_Website_Copy_V1_to_V2 — Build Status.docx" (original untouched).
+- **OPEN QUESTIONS for client** (in the annotated doc): (1) home default sort Company A–Z vs newest-first; (2) Terms "Last updated" real launch date; (3) PROXY_PREVIEW_URL; (4) Rule 14a-8 link URL (used eCFR); (5) admin Rejected tab keep/hide; (6) account-settings link target; (7) admin stat definitions; (8) doc "Exclution" typo.
+- Reminder: before pushing to staging, keep svelte.config.js on adapter-node (local working copy may be flipped to adapter-auto).
+
+### 2026-11-25 (later) — V2 copy QA pass + gaps fixed
+Thorough QA of every doc item against the running site. Found & fixed gaps beyond the first pass:
+- **Home hero**: added the V2 hero line ("Publish your shareholder proposal, no-action notice, or exempt solicitation to the public record.") + "Why POE?" link (→/about) — were missing.
+- **Proposal detail lifecycle**: relabelled to the doc's 5 stages — Proposal filed → No-action / exclusion → Proxy decision → Exempt solicitation → Annual meeting (was Proposal Filed·No-Action·Exclusion·Exempt Sol·AGM).
+- **Certification** (SubmitFilingModal): updated to the doc [131] wording incl. "I authorize this submission to be published on the Proxy Open Exchange. I acknowledge the Terms of Use." (+ link to /terms).
+- **Attachment confirmation bug**: no-action/exempt attach was wrongly showing the "pending admin review" proposal popup (with resolution + Proxy Preview lines). Fixed to show the inline "[type] attached to [Company]. Live immediately — no admin approval required." banner (attachNotice was declared/rendered but never assigned).
+- Verified live: all page copy (home/about/terms/signup/login/admin), submit modal (welcome notice, 3 modes, mode A/B/C fields, link-to-proposal, submit button 'Submit Filing'), detail page (header, lifecycle, written materials, owner panel, proxy status). Approve toast + attach banner verified by code (not triggered live to avoid mutating clone data).
+- Delivered color-coded status doc (green=done / red=pending) with per-row shading + section comments: Desktop/"POE_Website_Copy_V1_to_V2 — Build Status.docx".
+- STILL PENDING (client input): default sort (Company A–Z vs newest-first); Terms 'Last updated' launch date; PROXY_PREVIEW_URL; account-settings link target; admin Rejected tab keep/hide; Rule 14a-8 URL confirm.
+
+### 2026-11-25 (later) — Applied NEWER copy-doc revision (client pasted update)
+Client sent a revised copy doc. Applied deltas on top of the first V2 pass:
+- Hero line → "Publish your shareholder proposals and related documents to the public record."
+- Footer brand shortened; footer Resources "SEC Rule Change" → "Proposed SEC Rescission".
+- Home default sort → Date Filed, newest-first (client changed from Company A–Z); empty state → "No proposals yet"; column label → "Exempt Sol".
+- About page fully rewritten to the new wording (intro, 4 publish items, Why POE Exists w/ "rescind", "verified proponents", Rule 14a-8 reference).
+- Terms: Last updated DATE now provided (December 1, 2026); §2 "voluntary, not SEC required filings"; §3 rewritten + warrant list; §4 new warrant list; §5 "POE PLATFORM"; §6 renamed "Hold Harmless"; §7 "does not conform with the requirements of the site"; §10 "POE Operators"; §12 street address REMOVED.
+- Signup intro reworded; submit welcome notice reworded; mode option "File a shareholder proposal filed this season"; "Only shows your own proposals"; certification "I have read and acknowledged"; confirmation wording tweaks.
+- **adapter fix**: installed @sveltejs/adapter-node locally (was declared but not installed — the reason svelte.config.js kept getting flipped to adapter-auto). Config now stays on adapter-node for both local dev and staging. No more toggling.
+
+OPEN / FLAGGED from this revision:
+- NEW 4th submission mode "Update Exclusion from or Inclusion on an issuer's proxy statement" — a new proxy-status-update flow; we currently have an "Edit proposal" mode. Needs design decision (dedicated mode? replace Edit?).
+- Default sort direction: doc says "Date Filed, A to Z" (ambiguous) — implemented newest-first; confirm.
+- Footer "Proposed SEC Rescission" vs home sidebar "SEC Rule Change" — doc is inconsistent; implemented literally. Should both match?
+- Mode C $5M checkbox wording differs from the doc (modal has its own 2-checkbox $5M flow) — needs careful alignment.
+- Minor helper tweaks pending (Mode A supporting-doc, Mode B letter/response, Mode C "must also file").
+- Still open: Proxy Preview URL, account-settings link, admin Rejected tab, Rule 14a-8 URL.

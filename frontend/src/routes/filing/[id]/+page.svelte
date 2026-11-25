@@ -213,11 +213,11 @@
             <span class="step-sub">{fmt(record.created_at)}</span>
           </div>
           <div class="step {noAction ? 'done' : ''}">
-            <span class="dot"></span><span class="step-label">NO-ACTION</span>
+            <span class="dot"></span><span class="step-label">NO-ACTION / EXCLUSION</span>
             <span class="step-sub">{noAction ? (noAction.notice_date ? fmt(noAction.notice_date) : "Filed") : "None on record"}</span>
           </div>
           <div class="step {record.proxy_status ? 'done' : ''}">
-            <span class="dot"></span><span class="step-label">EXCLUSION</span>
+            <span class="dot"></span><span class="step-label">PROXY DECISION</span>
             <span class="step-sub">{record.proxy_status ? statusLabel : "Not yet known"}</span>
           </div>
           <div class="step {exempt ? 'done' : ''}">
@@ -225,8 +225,8 @@
             <span class="step-sub">{exempt ? "Filed" : "None on record"}</span>
           </div>
           <div class="step {record.meeting_date_known ? 'done' : ''}">
-            <span class="dot"></span><span class="step-label">{record.meeting_date_known ? "AGM DATE" : "EST. AGM DATE"}</span>
-            <span class="step-sub">{fmt(record.meeting_date)}</span>
+            <span class="dot"></span><span class="step-label">ANNUAL MEETING</span>
+            <span class="step-sub">{fmt(record.meeting_date)} <span class="muted">{record.meeting_date_known ? "" : "(est.)"}</span></span>
           </div>
         </div>
 

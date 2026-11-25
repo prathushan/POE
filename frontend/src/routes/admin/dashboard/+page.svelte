@@ -17,6 +17,9 @@
     approved: 0,
     rejected: 0,
     total: 0,
+    proposals: 0,
+    noAction: 0,
+    exempt: 0,
   });
 
   onMount(async () => {
@@ -38,6 +41,9 @@
       approved: visible.filter((f) => f.status === "approved").length,
       rejected: visible.filter((f) => f.status === "rejected").length,
       total: visible.length,
+      proposals: visible.filter((f) => f.filing_type === "proposal").length,
+      noAction: visible.filter((f) => f.filing_type === "no_action").length,
+      exempt: visible.filter((f) => f.filing_type === "exempt_solicitation").length,
     };
 
     applyFilter();
@@ -297,8 +303,23 @@
       f.id === id ? { ...f, status, admin_note: adminNote } : f,
     );
 
+    // V2: confirmation toast when a proposal is approved and goes public.
+    if (status === "approved") {
+      const f = filings.find((x) => x.id === id);
+      const company = f?.company_name || f?.memo_submitter || "Proposal";
+      showAdminToast(`Approved: ${company} proposal is now public.`);
+    }
+
     updateUI();
     closeModal();
+  }
+
+  let adminToast = $state("");
+  let adminToastTimer;
+  function showAdminToast(msg) {
+    adminToast = msg;
+    clearTimeout(adminToastTimer);
+    adminToastTimer = setTimeout(() => (adminToast = ""), 4000);
   }
 
   async function removeAttachment(childId, kind) {
@@ -357,9 +378,13 @@
 
 <svelte:window on:keydown={(e) => { if (e.key === "Escape" && showModal) closeModal(); }} />
 
+{#if adminToast}
+  <div class="admin-toast" role="status">{adminToast}</div>
+{/if}
+
 <div class="container">
   <div class="header"></div>
-  <h2 class="title">Filing Administration</h2>
+  <h2 class="title">Admin Dashboard</h2>
 
   <!-- STATS -->
   <div class="stats">
@@ -374,13 +399,18 @@
     </div>
 
     <div class="stat-card">
-      <div class="num rejected">{stats.rejected}</div>
-      <div class="label">REJECTED</div>
+      <div class="num total">{stats.proposals}</div>
+      <div class="label">PROPOSALS</div>
     </div>
 
     <div class="stat-card">
-      <div class="num total">{stats.total}</div>
-      <div class="label">TOTAL</div>
+      <div class="num total">{stats.noAction}</div>
+      <div class="label">NO-ACTION</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="num total">{stats.exempt}</div>
+      <div class="label">EXEMPT SOL</div>
     </div>
   </div>
 
@@ -889,6 +919,23 @@
     text-transform: uppercase;
     color: var(--g4);
     margin-top: 6px;
+  }
+
+  /* APPROVE TOAST (V2) */
+  .admin-toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    background: #1a3a5c;
+    color: #fff;
+    border-left: 4px solid #2e7d4f;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
   }
 
   /* TABS */

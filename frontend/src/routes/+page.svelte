@@ -11,6 +11,7 @@
   let search = $state("");
   let prevSearch = ""; // ✅ FIX ADDED
   let filings = $state([]);
+  let loading = $state(true); // branded loader while the index + stats load
   let selectedFiling = $state(null);
   let stats = $state({
     total: 0,
@@ -20,7 +21,7 @@
   });
 
   let sortColumn = $state("created_at");
-  let sortDirection = $state("desc"); // newest first, so just-approved proposals show on top
+  let sortDirection = $state("desc"); // V2 copy doc (rev): default sort is Date Filed; newest-first
 
   let detailOpen = $state(false);
 
@@ -102,11 +103,15 @@
   const pageSize = 10;
 
   onMount(async () => {
-    const res = await fetch("/api/filings/public");
-    filings = await res.json();
+    try {
+      const res = await fetch("/api/filings/public");
+      filings = await res.json();
 
-    const statsRes = await fetch("/api/filings/stats");
-    stats = await statsRes.json();
+      const statsRes = await fetch("/api/filings/stats");
+      stats = await statsRes.json();
+    } finally {
+      loading = false;
+    }
   });
 
   function getPaginated() {
@@ -207,7 +212,10 @@
 <div class="search-hero">
   <div class="container">
     <h2>Search Proposals</h2>
-    <!-- <p>Browse shareholder proposals, no-action/exclusion notices, and exempt solicitations filed on the Proxy Open Exchange.</p> -->
+    <p class="hero-line">
+      Publish your shareholder proposals and related documents to the public
+      record. <a href="/about" class="why-poe">Why POE?</a>
+    </p>
 
     <div class="search-box">
       <input
@@ -227,17 +235,23 @@
       <h3>All Proposals</h3>
     </div>
 
+    {#if loading}
+      <div class="poe-loader">
+        <div class="poe-spinner"><span>POE</span></div>
+        <p>Loading proposals…</p>
+      </div>
+    {:else}
     <!-- ✅ SHOWING TEXT -->
     <p style="margin:10px 0; font-size:13px; color:#666;">
       {#if filings.length === 0}
-        Showing 0 filings
+        Showing 0 proposals
       {:else if filteredFilings.length === 0}
-        {#if search.trim()}No filings match “{search.trim()}”{:else}No filings yet{/if}
+        {#if search.trim()}No proposals match “{search.trim()}”{:else}No proposals yet{/if}
       {:else}
         Showing {Math.min((currentPage - 1) * pageSize + 1, filteredFilings.length)}
         –
         {Math.min(currentPage * pageSize, filteredFilings.length)}
-        of {filteredFilings.length} filings
+        of {filteredFilings.length} proposals
       {/if}
     </p>
 
@@ -256,18 +270,18 @@
 
       <thead>
         <tr>
-          <th on:click={() => sortBy("company")}>Company{arrow("company")}</th>
-          <th on:click={() => sortBy("created_at")}>Date{arrow("created_at")}</th>
-          <th on:click={() => sortBy("filer")}>Filer{arrow("filer")}</th>
-          <th on:click={() => sortBy("topic")}>Proposal Topic{arrow("topic")}</th>
-          <th class="ctr" on:click={() => sortBy("exempt")}>Exempt Solicitation{arrow("exempt")}</th>
-          <th class="ctr" on:click={() => sortBy("no_action")}>No-Action{arrow("no_action")}</th>
-          <th class="ctr" on:click={() => sortBy("exclusion")}>Exclusion{arrow("exclusion")}</th>
+          <th class:active={sortColumn === "company"} on:click={() => sortBy("company")}>Company{arrow("company")}</th>
+          <th class:active={sortColumn === "created_at"} on:click={() => sortBy("created_at")}>Date{arrow("created_at")}</th>
+          <th class:active={sortColumn === "filer"} on:click={() => sortBy("filer")}>Filer{arrow("filer")}</th>
+          <th class:active={sortColumn === "topic"} on:click={() => sortBy("topic")}>Proposal Topic{arrow("topic")}</th>
+          <th class="ctr" class:active={sortColumn === "exempt"} on:click={() => sortBy("exempt")}>Exempt Sol{arrow("exempt")}</th>
+          <th class="ctr" class:active={sortColumn === "no_action"} on:click={() => sortBy("no_action")}>No-Action{arrow("no_action")}</th>
+          <th class="ctr" class:active={sortColumn === "exclusion"} on:click={() => sortBy("exclusion")}>Exclusion{arrow("exclusion")}</th>
         </tr>
       </thead>
       <tbody>
         {#if filteredFilings.length === 0}
-          <tr><td colspan="7" style="text-align:center;color:#888;padding:24px;">{search.trim() ? `No filings match “${search.trim()}”` : "No filings yet"}</td></tr>
+          <tr><td colspan="7" style="text-align:center;color:#888;padding:24px;">{search.trim() ? `No proposals match “${search.trim()}”` : "No proposals yet"}</td></tr>
         {:else}
           {#each getPaginated() as f}
             <tr class="clickable-row" on:click={() => openModal(f)}>
@@ -309,6 +323,7 @@
         Next →
       </button>
     </div>
+    {/if}
   </div>
 
   <!-- RIGHT SIDEBAR -->
@@ -337,10 +352,6 @@
             <div class="stat-number">{tracker.exempt}</div>
             <div class="stat-label">Exempt Solicitation</div>
           </div>
-          <div class="stat-item">
-            <div class="stat-number">{stats.pending}</div>
-            <div class="stat-label">Pending</div>
-          </div>
         </div>
       </div>
     </div>
@@ -356,6 +367,15 @@
               rel="noopener noreferrer"
             >
               → SEC Rule Change
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.ecfr.gov/current/title-17/section-240.14a-8"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              → Rule 14a-8 (Shareholder Proposals)
             </a>
           </li>
           <li>
@@ -377,6 +397,51 @@
 </div>
 
 <style>
+  .hero-line .why-poe {
+    color: var(--blue);
+    font-weight: 600;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+  .hero-line .why-poe:hover { color: var(--gold); }
+
+  /* Branded loading spinner — gold ring spinning around a static POE mark */
+  .poe-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 72px 0;
+  }
+  .poe-spinner {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid var(--g2);
+    border-top-color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: poe-spin 0.9s linear infinite;
+  }
+  .poe-spinner span {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--blue);
+    animation: poe-spin-rev 0.9s linear infinite; /* keep the POE text upright */
+  }
+  .poe-loader p {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--g4);
+  }
+  @keyframes poe-spin { to { transform: rotate(360deg); } }
+  @keyframes poe-spin-rev { to { transform: rotate(-360deg); } }
+
   /* CLICKABLE ROW */
   .clickable-row {
     cursor: pointer;
@@ -393,6 +458,8 @@
     font-size: 10px; letter-spacing: 0.03em; color: var(--g4);
     padding: 11px 7px; vertical-align: bottom; line-height: 1.25;
   }
+  /* only change vs staging: the active sort column is highlighted in blue */
+  .filing-table thead th.active { color: var(--blue); font-weight: 700; }
   .filing-table td { word-break: normal; overflow-wrap: break-word; padding: 11px 7px; vertical-align: top; font-size: 13px; }
   .filing-table th:nth-child(1), .filing-table td:nth-child(1) { width: 16%; }  /* Company */
   .filing-table th:nth-child(2), .filing-table td:nth-child(2) { width: 13%; white-space: nowrap; font-size: 11.5px; }  /* Date */

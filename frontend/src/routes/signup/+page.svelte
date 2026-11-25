@@ -89,7 +89,10 @@
 
     <h2>Create Account</h2>
     <p class="auth-sub">
-      Register your organization to submit exempt solicitations on the Proxy Open Exchange.
+      Register your organization to submit shareholder proposals and related
+      filings on the Proxy Open Exchange. The details you enter here will be
+      filled in as filer information automatically on every subsequent
+      submission.
     </p>
 
     <!-- 🔴 ERROR MESSAGE -->

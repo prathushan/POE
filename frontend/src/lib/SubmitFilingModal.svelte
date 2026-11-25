@@ -386,11 +386,15 @@
           close();
           confirmOpen = true;
         } else {
-          // no_action / exempt → styled confirmation popup (round-2 §4),
-          // with a headline matching the submission type.
-          successKind = mode; // "no_action" | "exempt"
-          close();
-          confirmOpen = true;
+          // no_action / exempt attachment → inline "Live immediately" banner
+          // (copy doc §6 [139-140]). Attachments publish immediately, so this is
+          // NOT the pending-review popup. Keep the modal open to show the banner,
+          // then reload so the fresh attachment state is reflected everywhere.
+          const company = selectedProposal?.company_name || company_name || "the proposal";
+          const label = mode === "no_action" ? "No-action notice" : "Exempt solicitation";
+          attachNotice = `${label} attached to ${company}. Live immediately — no admin approval required.`;
+          try { document.querySelector(".submit-modal .modal-body")?.scrollTo(0, 0); } catch {}
+          setTimeout(() => { window.location.reload(); }, 2800);
         }
       } else {
         alert("Error: " + (data.message || "could not submit"));
@@ -420,6 +424,13 @@
             <span>{attachNotice}</span>
           </div>
         {/if}
+        <!-- WELCOME NOTICE (V2) -->
+        <div class="welcome-notice">
+          Welcome to the Proxy Open Exchange. POE is an open, community-driven platform.
+          Publish a shareholder proposal; attach a no-action notice and/or exempt
+          solicitation as the season unfolds. New proposals are reviewed before
+          publication; attachments to proposals publish immediately.
+        </div>
         <!-- SUBMISSION MODE -->
         <div class="form-section">
           <div class="form-section-title">Submission Mode</div>
@@ -428,7 +439,7 @@
               <label>What would you like to do? <span class="req">*</span></label>
               <select bind:value={mode} onchange={onModeChange}>
                 <option value="">— Select —</option>
-                <option value="new">File a new shareholder proposal</option>
+                <option value="new">File a shareholder proposal filed this season</option>
                 <option value="no_action">Attach a no-action / exclusion notice to one of my proposals</option>
                 <option value="exempt">Attach an exempt solicitation to one of my proposals</option>
                 <option value="edit">Edit one of my submitted proposals</option>
@@ -536,6 +547,7 @@
                 <div class="form-row">
                   <label>Registrant CIK <span class="req">*</span></label>
                   <input bind:value={registrant_cik} placeholder="10-digit CIK" />
+                  <div class="helper">Don't have a CIK? <a href="https://www.sec.gov/submit-filings/filer-support-resources/how-do-i-guides/filer-id-cik" target="_blank" rel="noreferrer">Sign up for a CIK number →</a></div>
                 </div>
               </div>
               <div class="form-grid">
@@ -787,7 +799,7 @@
             <div class="form-section-body">
               <label class="checkbox-row">
                 <input type="checkbox" bind:checked={certify} />
-                <span>I certify that the information provided is true and accurate to the best of my knowledge, and I am authorized to submit this filing on behalf of the named filer.</span>
+                <span>I certify that the information provided is accurate, that I have authority to file on behalf of the named entity, and I authorize this submission to be published on the Proxy Open Exchange. I have read and acknowledged the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Use</a>.</span>
               </label>
               {#if mode === "new"}
                 <label class="checkbox-row" style="margin-top:12px;">
@@ -826,7 +838,10 @@
           <p>Your <strong>exempt solicitation has been submitted</strong> and is pending admin review.</p>
         {:else}
           <p><strong>Your shareholder proposal has been submitted</strong> and is pending admin review.</p>
-          <p class="cm-line"><span class="cm-dot">●</span> <strong>Be sure to return to update your resolution</strong> once you know if it has been included, excluded, or withdrawn on the proxy statement.</p>
+          <p class="cm-line"><span class="cm-dot">●</span> <strong>Be sure to return to update your resolution</strong> once you know if it has been included in the issuer's proxy statement, excluded, or withdrawn.</p>
+          <p class="cm-line"><span class="cm-dot">●</span> If you have an interest in submitting an article to be included in <strong>Proxy Preview 2027</strong> please review the
+            {#if PROXY_PREVIEW_URL}<a href={PROXY_PREVIEW_URL} target="_blank" rel="noopener noreferrer">contribution instructions</a>.{:else}contribution instructions <span class="cm-soon">(link coming soon)</span>.{/if}
+          </p>
         {/if}
       </div>
       <button class="btn-primary confirm-done" onclick={closeConfirm}>Done</button>
@@ -874,7 +889,7 @@
             {/if}
           {/if}
         </div>
-        <div class="helper">Only shows your own approved proposals. Search by company name or topic.</div>
+        <div class="helper">Only shows your own proposals. Search by company name or topic.</div>
         {#if parent_proposal_id}
           <p class="selected-note">✓ Selected: {proposalSearch}</p>
         {/if}
@@ -982,6 +997,19 @@
   .ms-chip button:hover { color: var(--accent); }
 
   /* inline attach-success banner */
+  .welcome-notice {
+    background: var(--paper, #faf8f3);
+    border-left: 3px solid var(--gold, #c9a84c);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--g5, #4a4a4a);
+  }
+  .confirm-card .confirm-msg .cm-soon { color: var(--g4, #8a8a8a); font-style: italic; }
+
   .attach-notice {
     display: flex; align-items: center; gap: 10px;
     background: var(--green-light); border: 1px solid #b7e0c4; color: var(--green);

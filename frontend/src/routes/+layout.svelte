@@ -92,7 +92,7 @@
       <div class="logo-seal">POE</div>
       <div class="logo-text">
         <h1>Proxy Open Exchange</h1>
-        <p>Shareholder Exempt Solicitation Publishing Platform</p>
+        <p>Shareholder Proposal Publishing Platform</p>
       </div>
     </a>
 
@@ -138,9 +138,9 @@
       <div class="footer-brand">
         <h4>Proxy Open Exchange</h4>
         <p>
-          An open, community-driven platform for publishing shareholder exempt
-          solicitations. Created in response to the SEC's revised Question
-          126.06 to ensure continued transparency in corporate governance.
+          An open, community-driven platform for publishing shareholder
+          proposals and related documents, and tracking proxy
+          exclusion/inclusion status.
         </p>
       </div>
 
@@ -148,11 +148,11 @@
       <div>
         <h5>Navigate</h5>
         <ul>
-          <li><a href="/">Browse Exempt Solicitations</a></li>
+          <li><a href="/">Browse Proposals</a></li>
           {#if data.user}
-            <li><button type="button" class="footer-link-btn" onclick={() => (showSubmit = true)}>Submit Exempt Solicitation</button></li>
+            <li><button type="button" class="footer-link-btn" onclick={() => (showSubmit = true)}>Submit a Filing</button></li>
           {:else}
-            <li><a href="/login">Submit Exempt Solicitation</a></li>
+            <li><a href="/login">Submit a Filing</a></li>
           {/if}
           <li><a href="/about">About POE</a></li>
           <li><a href="/terms">Terms of Use</a></li>
@@ -169,14 +169,24 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              SEC Rule Change
+              Proposed SEC Rescission
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="https://www.ecfr.gov/current/title-17/section-240.14a-8"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Rule 14a-8 (Shareholder Proposals)
             </a>
           </li>
 
           <!-- <li>
-      <a 
-        href="https://www.sec.gov/submit-filings/forms-index/aboutformsformidpdf" 
-        target="_blank" 
+      <a
+        href="https://www.sec.gov/submit-filings/forms-index/aboutformsformidpdf"
+        target="_blank"
         rel="noopener noreferrer"
       >
         Register for a CIK Number
@@ -198,7 +208,7 @@
 
     <div class="footer-bottom">
       <span>© 2026 Proxy Open Exchange</span>
-      <span>All Proxy memos published under CC BY 4.0</span>
+      <span>All filings published under CC BY 4.0</span>
     </div>
   </div>
 </footer>

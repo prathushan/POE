@@ -159,6 +159,7 @@
   // round-2 §6: optionally confirm the proposal's AGM date from the exempt form
   let exempt_agm_date = $state("");     // canonical yyyy-mm-dd
   let exemptAgmInput = $state("");      // shown as mm/dd/yyyy
+  let exempt_agm_known = $state(true);  // at exempt-filing time the AGM is usually confirmed
 
   // ── Standalone (legacy) extra ──
   let std_company = $state("");
@@ -248,7 +249,7 @@
     meeting_date = ""; meetingDateInput = ""; meeting_date_known = false; proposal_text = ""; proxy_status = "";
     parent_proposal_id = ""; proposalSearch = ""; edit_id = ""; proposalDdOpen = false;
     exclusion_bases = []; notice_date = ""; noticeDateInput = ""; basisDdOpen = false;
-    def14a_link = ""; item_number = ""; voluntary_5m = false; exempt_agm_date = ""; exemptAgmInput = "";
+    def14a_link = ""; item_number = ""; voluntary_5m = false; exempt_agm_date = ""; exemptAgmInput = ""; exempt_agm_known = true;
     std_company = ""; std_topic = ""; std_contact = ""; std_5m_ack = false;
     primary_file = null; second_file = null; certify = false;
     proxyPreviewInterest = false;
@@ -327,7 +328,7 @@
       fd.append("def14a_link", def14a_link);
       fd.append("item_number", item_number);
       fd.append("voluntary_5m", voluntary_5m);
-      if (exempt_agm_date) fd.append("agm_date", exempt_agm_date);
+      if (exempt_agm_date) { fd.append("agm_date", exempt_agm_date); fd.append("agm_known", exempt_agm_known); }
       fd.append("primary_file", primary_file);
     } else if (mode === "edit") {
       // Round-2 §7/§8: edit one of my own submitted proposals (PDF optional).
@@ -691,14 +692,16 @@
                 </div>
               </div>
 
-              <div class="form-grid">
-                <div class="form-row">
-                  <label>Annual Meeting Date</label>
-                  {@render dateField(exemptAgmInput, exempt_agm_date,
-                    (v) => { exemptAgmInput = formatMdy(v); exempt_agm_date = mdyToIso(exemptAgmInput); },
-                    (iso) => { exempt_agm_date = iso; exemptAgmInput = isoToMdy(iso); })}
+              <div class="form-row">
+                <label>Annual Meeting Date</label>
+                {@render dateField(exemptAgmInput, exempt_agm_date,
+                  (v) => { exemptAgmInput = formatMdy(v); exempt_agm_date = mdyToIso(exemptAgmInput); },
+                  (iso) => { exempt_agm_date = iso; exemptAgmInput = isoToMdy(iso); })}
+                <div class="date-kind">
+                  <label><input type="radio" value={false} bind:group={exempt_agm_known} /> Estimated</label>
+                  <label><input type="radio" value={true} bind:group={exempt_agm_known} /> Known (confirmed)</label>
                 </div>
-                <div></div>
+                <div class="helper">If the date is not yet announced, estimate it using the same day and month as last year's meeting. You can switch it to Known later from your proposal's detail page.</div>
               </div>
 
               <div class="form-row">

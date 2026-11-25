@@ -117,10 +117,9 @@
           <!-- UNIFIED PROPOSAL -->
           <div class="pd-header-row">
             <div class="pd-header-left">
-              <h2 class="pd-company">{record.company_name || "-"}</h2>
+              <h2 class="pd-company">{record.company_name || "-"}<span class="pd-badge {record.proxy_status || 'pending'}">{record.proxy_status ? record.proxy_status.charAt(0).toUpperCase() + record.proxy_status.slice(1) : "Pending"}</span></h2>
               <p class="pd-date">
                 Filed: {fmt(record.created_at)} · Filer: {record.filer_name || "-"}
-                <span class="pd-badge {record.proxy_status || 'pending'}">{record.proxy_status ? record.proxy_status.charAt(0).toUpperCase() + record.proxy_status.slice(1) : "Pending"}</span>
               </p>
               {@render shareRow()}
             </div>
@@ -140,20 +139,22 @@
                     <button type="button" class="btn-sm btn-view" onclick={() => openAttach("exempt")}>+ Attach Exempt Solicitation</button>
                   {/if}
                 </div>
-                <label class="owner-status-row">AGM date
-                  <select bind:value={agmKnown} onchange={saveProxy}>
-                    <option value="estimated">Estimated</option>
-                    <option value="known">Known</option>
-                  </select>
-                </label>
-                <label class="owner-status-row">Proxy status
-                  <select bind:value={proxyStatus} onchange={saveProxy}>
-                    <option value="">Not yet known</option>
-                    <option value="included">Included</option>
-                    <option value="excluded">Excluded</option>
-                    <option value="withdrawn">Withdrawn</option>
-                  </select>
-                </label>
+                <div class="owner-status-inline">
+                  <label class="owner-status-row">AGM date
+                    <select bind:value={agmKnown} onchange={saveProxy}>
+                      <option value="estimated">Estimated</option>
+                      <option value="known">Known</option>
+                    </select>
+                  </label>
+                  <label class="owner-status-row">Proxy status
+                    <select bind:value={proxyStatus} onchange={saveProxy}>
+                      <option value="">Not yet known</option>
+                      <option value="included">Included</option>
+                      <option value="excluded">Excluded</option>
+                      <option value="withdrawn">Withdrawn</option>
+                    </select>
+                  </label>
+                </div>
               </div>
             {/if}
           </div>
@@ -275,10 +276,10 @@
   .pd-body { padding: 28px 28px 32px; }
   .pd-company { margin: 8px 0 10px; font-size: 26px; line-height: 1.25; color: #1a3a5c; font-family: Georgia, "Times New Roman", serif; }
   .pd-date { font-size: 12px; color: #777; margin: 0 0 6px; }
-  .pd-badge { display: inline-block; margin-left: 6px; padding: 2px 9px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; vertical-align: middle; }
+  .pd-badge { display: inline-block; margin-left: 10px; padding: 2px 9px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; vertical-align: middle; white-space: nowrap; }
   .pd-badge.included { background: #d1fae5; color: #065f46; }
   .pd-badge.excluded { background: #fee2e2; color: #7f1d1d; }
-  .pd-badge.withdrawn { background: #e5e7eb; color: #374151; }
+  .pd-badge.withdrawn { background: #fde68a; color: #6b5300; }
 
   /* social share */
   .pd-share { display: flex; align-items: center; gap: 9px; margin: 16px 0 2px; }
@@ -318,6 +319,7 @@
   .owner-actions .btn-view { background: #e8f0fe; color: var(--blue); border-color: var(--blue-light); }
   .owner-actions .btn-view:hover { background: #d8e6fd; }
   .owner-actions .btn-attached { background: var(--green-light); color: var(--green); border-color: var(--green-light); cursor: default; }
+  .owner-status-inline { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
   .owner-status-row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--g5); }
   .owner-status-row select { font-family: var(--sans); font-size: 13px; padding: 5px 8px; border: 1.5px solid var(--g2); border-radius: 4px; background: #fff; }
 

@@ -150,10 +150,9 @@
         <!-- ─── UNIFIED PROPOSAL DETAIL ─── -->
         <div class="top">
           <div class="top-left">
-            <h2 class="company">{record.company_name || "-"}</h2>
+            <h2 class="company">{record.company_name || "-"}<span class="badge {record.proxy_status || 'pending'}">{statusLabel}</span></h2>
             <p class="date">
               Filed: {fmt(record.created_at)} · Filer: {record.filer_name || "-"}
-              <span class="badge {record.proxy_status || 'pending'}">{statusLabel}</span>
             </p>
           </div>
 
@@ -172,20 +171,22 @@
                   <button type="button" class="btn-sm btn-view" onclick={() => openAttach("exempt")}>+ Attach Exempt Solicitation</button>
                 {/if}
               </div>
-              <label class="owner-status-row">AGM date
-                <select bind:value={agmKnown} onchange={saveProxy}>
-                  <option value="estimated">Estimated</option>
-                  <option value="known">Known</option>
-                </select>
-              </label>
-              <label class="owner-status-row">Proxy status
-                <select bind:value={proxyStatus} onchange={saveProxy}>
-                  <option value="">Not yet known</option>
-                  <option value="included">Included</option>
-                  <option value="excluded">Excluded</option>
-                  <option value="withdrawn">Withdrawn</option>
-                </select>
-              </label>
+              <div class="owner-status-inline">
+                <label class="owner-status-row">AGM date
+                  <select bind:value={agmKnown} onchange={saveProxy}>
+                    <option value="estimated">Estimated</option>
+                    <option value="known">Known</option>
+                  </select>
+                </label>
+                <label class="owner-status-row">Proxy status
+                  <select bind:value={proxyStatus} onchange={saveProxy}>
+                    <option value="">Not yet known</option>
+                    <option value="included">Included</option>
+                    <option value="excluded">Excluded</option>
+                    <option value="withdrawn">Withdrawn</option>
+                  </select>
+                </label>
+              </div>
             </div>
           {/if}
         </div>
@@ -319,10 +320,10 @@
   .top { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
   .company { margin: 0; font-size: 22px; color: #13294b; font-family: Georgia, serif; }
   .date { font-size: 12px; color: #777; margin: 6px 0 0; }
-  .badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; }
+  .badge { display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; white-space: nowrap; vertical-align: middle; }
   .badge.included { background: #d1fae5; color: #065f46; }
   .badge.excluded { background: #fee2e2; color: #7f1d1d; }
-  .badge.withdrawn { background: #e5e7eb; color: #374151; }
+  .badge.withdrawn { background: #fde68a; color: #6b5300; }
 
   /* social share */
   .pd-share { display: flex; align-items: center; gap: 9px; margin: 14px 0 2px; }
@@ -355,6 +356,7 @@
   .owner-actions .btn-view { background: #e8f0fe; color: var(--blue); border-color: var(--blue-light); }
   .owner-actions .btn-view:hover { background: #d8e6fd; }
   .owner-actions .btn-attached { background: var(--green-light); color: var(--green); border-color: var(--green-light); cursor: default; }
+  .owner-status-inline { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
   .owner-status-row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--g5); }
   .owner-status-row select { font-family: var(--sans); font-size: 13px; padding: 5px 8px; border: 1.5px solid var(--g2); border-radius: 4px; background: #fff; }
 

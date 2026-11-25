@@ -491,7 +491,7 @@
   }
   .proxy-included { background: var(--green-light); color: var(--green); }
   .proxy-excluded { background: var(--red-light); color: var(--red); }
-  .proxy-withdrawn { background: var(--orange-light); color: var(--orange); }
+  .proxy-withdrawn { background: #fde68a; color: #6b5300; }
   .proxy-pending { background: #f0f0ec; color: var(--g4); }
 
   /* MODAL */

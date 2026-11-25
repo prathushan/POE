@@ -105,6 +105,7 @@ export const POST = async ({ request, locals }) => {
       const item_number = form.get('item_number') || null;
       const voluntary = form.get('voluntary_5m') === 'true';
       const agm_date = form.get('agm_date') || null; // round-2 §6: optionally confirm the proposal's AGM
+      const agm_known = form.get('agm_known') === 'true'; // Estimated vs Known (confirmed) from the exempt form
       const primary = form.get('primary_file');
       if (!proposal_id || !primary || primary.size === 0) {
         return json({ message: 'Missing proposal or exempt solicitation PDF' }, { status: 400 });
@@ -130,8 +131,8 @@ export const POST = async ({ request, locals }) => {
       // round-2 §6: if an AGM date was supplied, confirm it on the parent proposal.
       if (agm_date) {
         await pool.query(
-          `UPDATE filings SET meeting_date = $1, meeting_date_known = true WHERE id = $2`,
-          [agm_date, proposal_id]
+          `UPDATE filings SET meeting_date = $1, meeting_date_known = $2 WHERE id = $3`,
+          [agm_date, agm_known, proposal_id]
         );
       }
       return json({ success: true, filing_type: 'exempt_solicitation' });

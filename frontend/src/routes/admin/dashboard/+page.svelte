@@ -498,6 +498,7 @@
             <td>
               <strong>{f.company_name || f.memo_submitter || "-"}</strong><br />
               <span class="sub">CIK: {f.company_cik || "-"}</span>
+              {#if f.proxy_preview_interest}<br /><span class="pp-tag">★ Proxy Preview 2027 interest</span>{/if}
             </td>
 
             <td>{f.filer_name || f.memo_submitter || "-"}</td>
@@ -528,7 +529,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
               </button>
               <button class="icon delete" title="Delete" aria-label="Delete" on:click={() => deleteFiling(f.id)}>
-                <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9m1 4h2v10h-2V7m4 0h2v10h-2V7M6 7h2v10H6V7Z"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
               </button>
             </td>
           </tr>
@@ -1018,7 +1019,8 @@
 
   /* fixed column widths (sum = 100%) so the table never overflows */
   th:nth-child(1), td:nth-child(1) { width: 8%; }    /* DATE */
-  th:nth-child(2), td:nth-child(2) { width: 21%; }   /* COMPANY */
+  th:nth-child(2), td:nth-child(2) { width: 22%; padding-left: 14px; padding-right: 16px; line-height: 1.55; }   /* COMPANY */
+  td:nth-child(2) .sub { display: inline-block; margin-top: 2px; }
   th:nth-child(3), td:nth-child(3) { width: 14%; }   /* FILER */
   th:nth-child(4), td:nth-child(4) { width: 15%; }   /* TOPIC */
   th:nth-child(5), td:nth-child(5) { width: 8%; text-align: center; }   /* STATUS */
@@ -1074,41 +1076,48 @@
     text-align: left;
     font-size: 0; /* collapse inline whitespace between the icon buttons */
   }
-  .actions .icon + .icon { margin-left: 5px; }
+  .actions .icon + .icon { margin-left: 6px; }
   .actions .icon {
     vertical-align: middle;
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     flex: 0 0 auto;
     padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
   }
   .actions .icon svg { width: 15px; height: 15px; }
-  .actions .icon:hover { filter: brightness(0.95); }
+  .actions .icon:hover { transform: translateY(-1px); }
 
   .review {
-    border: 1px solid #2b6cb0;
+    border: 1px solid #c7dbf5;
     color: #2b6cb0;
-    background: #e8f0fe;
+    background: #eef4fd;
   }
+  .review:hover { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
   .approve {
-    border: 1px solid green;
-    color: green;
-    background-image: #e6f4ea;
+    border: 1px solid #bfe3cb;
+    color: #16a34a;
+    background: #e9f7ee;
   }
+  .approve:hover { background: #16a34a; color: #fff; border-color: #16a34a; }
   .reject {
-    border: 1px solid red;
-    color: red;
-    background-color: #fde8e4;
+    border: 1px solid #f3c6c2;
+    color: #dc2626;
+    background: #fdeceb;
   }
+  .reject:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
 
   .delete {
-    border: 1px solid #ccc;
+    border: 1px solid var(--g2);
+    color: #8a8178;
+    background: #f5f3ee;
   }
+  .delete:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
 
   .modal-overlay {
     position: fixed;
@@ -1257,11 +1266,11 @@
   .modal-footer .edit-btn,
   .modal-footer .edit-save,
   .modal-footer .edit-cancel {
-    padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;
-    font-family: var(--sans) !important;
+    padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
+    font-family: var(--sans) !important; transition: background 0.15s ease, border-color 0.15s ease;
   }
-  .modal-footer .edit-btn { background: #fff; border: 1px solid var(--blue); color: var(--blue); margin-right: auto; }
-  .modal-footer .edit-btn:hover { background: #eef2fb; }
+  .modal-footer .edit-btn { background: #fff; border: 1.5px solid var(--g2); color: var(--g5); margin-right: auto; }
+  .modal-footer .edit-btn:hover { background: var(--paper-warm); border-color: var(--blue-light); color: var(--blue); }
   .modal-footer .edit-save { background: var(--blue); border: 1px solid var(--blue); color: #fff; margin-right: auto; }
   .modal-footer .edit-save:hover { background: var(--blue-light); }
   .modal-footer .edit-cancel { background: #fff; border: 1px solid var(--g2); color: var(--g5); }
@@ -1297,31 +1306,41 @@
   }
 
   .modal-footer .approve {
-    background: #e6f4ea;
-    border: 1px solid #2f855a;
-    color: #2f855a;
-    padding: 10px 18px;
-    border-radius: 6px;
+    background: #16a34a;
+    border: none;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
     font-weight: 600;
+    letter-spacing: 0.02em;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
   }
 
   .modal-footer .approve:hover {
-    background: #c6f6d5;
+    background: #15803d;
+    box-shadow: 0 4px 10px rgba(22,163,74,0.35);
+    transform: translateY(-1px);
   }
 
   .modal-footer .reject {
-    background: #fde8e4;
-    border: 1px solid #c53030;
-    color: #c53030;
-    padding: 10px 18px;
-    border-radius: 6px;
+    background: #dc2626;
+    border: none;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
     font-weight: 600;
+    letter-spacing: 0.02em;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
   }
 
   .modal-footer .reject:hover {
-    background: #fbd5d5;
+    background: #b91c1c;
+    box-shadow: 0 4px 10px rgba(220,38,38,0.35);
+    transform: translateY(-1px);
   }
 
   .modal-footer .edit {
@@ -1671,6 +1690,14 @@
     display: inline-block; font-family: "IBM Plex Mono", "Courier New", monospace;
     font-size: 11px; font-weight: 600; color: var(--blue);
     background: #fdf3d6; border: 1px solid var(--gold); padding: 2px 8px; border-radius: 3px;
+  }
+  .pp-tag {
+    display: inline-block; margin-top: 5px;
+    font-family: "IBM Plex Mono", "Courier New", monospace;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--blue); background: var(--gold); border: none;
+    padding: 2px 8px; border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(201, 168, 76, 0.5);
   }
 
   /* .grid div:first-child {

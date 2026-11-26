@@ -85,14 +85,22 @@
       companies = [];
     }
   }
-  // Suggest next year's AGM: same month/day, year + 1. Works purely on the
-  // YYYY-MM-DD string so it never shifts the day across timezones (toISOString
-  // would convert to UTC and move the day in +offset zones like IST).
+  // Suggest the next upcoming AGM: keep the reference meeting's month/day, but
+  // anchor the YEAR to the current proxy year (or next year if that date has
+  // already passed this year). This avoids the old "storedYear + 1" logic, which
+  // compounded forward every time a company's own estimate was reused as the
+  // base (e.g. a 2029 estimate → 2030 → 2031…). String-only math so the day
+  // never shifts across timezones.
   function suggestAgm(d) {
     if (!d) return "";
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d).slice(0, 10));
     if (!m) return "";
-    return `${Number(m[1]) + 1}-${m[2]}-${m[3]}`;
+    const month = m[2], day = m[3];
+    const today = new Date();
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    let year = today.getFullYear();
+    if (new Date(year, Number(month) - 1, Number(day)) < todayMidnight) year += 1;
+    return `${year}-${month}-${day}`;
   }
   function pickCompany(c) {
     company_name = c.company_name;
@@ -507,7 +515,7 @@
                   <div class="proposal-selector">
                     <input
                       bind:value={company_name}
-                      oninput={() => { showCompanyDd = true; registrant_cik = ""; lookupEdgar(company_name); }}
+                      oninput={() => { showCompanyDd = true; registrant_cik = ""; meeting_date = ""; meetingDateInput = ""; meeting_date_known = false; lookupEdgar(company_name); }}
                       onfocus={() => (showCompanyDd = true)}
                       onblur={() => setTimeout(() => (showCompanyDd = false), 180)}
                       placeholder="Start typing a company name..."

@@ -2,6 +2,7 @@
   import SubmitFilingModal from "$lib/SubmitFilingModal.svelte";
   import { parseBases } from "$lib/exclusionBases.js";
   import { cleanFileName } from "$lib/formatDate.js";
+  import { browser } from "$app/environment";
 
   let { data } = $props();
   const { record, exempt, noAction, isLegacy } = data;
@@ -57,16 +58,24 @@
     }
   }
 
-  const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }) : "-");
+  const fmt = (d) => {
+    if (!d) return "-";
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d)); // date-only / ISO → no timezone shift
+    if (m) return `${m[2]}/${m[3]}/${m[1]}`;
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? "-" : dt.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+  };
   const statusLabel = record?.proxy_status
     ? record.proxy_status.charAt(0).toUpperCase() + record.proxy_status.slice(1)
     : "Pending";
 
   // ── social share ──
   let copied = $state(false);
-  // Share the canonical PRODUCTION url (see CANONICAL above) so LinkedIn/FB/X
-  // can crawl it for the preview card, even when shared from staging.
-  const shareUrl = record ? `${CANONICAL}/filing/${record.id}` : "";
+  // Share the current environment's URL so the copied/shared link always points
+  // at the page the user is actually on (prod → prod, staging → staging). During
+  // SSR we fall back to the canonical prod origin.
+  const shareBase = browser ? window.location.origin : CANONICAL;
+  const shareUrl = record ? `${shareBase}/filing/${record.id}` : "";
   const shareTitle = record ? `${record.company_name || record.subject || "Shareholder Proposal"} — Proxy Open Exchange` : "";
   const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
   const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`;
@@ -114,17 +123,6 @@
 
 <div class="detail-page">
   <div class="card">
-    <div class="card-head">
-      <h3>
-        {#if isLegacy}
-          Exempt Solicitation — {record.subject || "-"}
-        {:else}
-          {record.company_name || "-"} — Shareholder Proposal
-        {/if}
-      </h3>
-      <a class="x" href="/" aria-label="Close">×</a>
-    </div>
-
     <div class="card-body">
       {#if isLegacy}
         <!-- ─── LEGACY STANDALONE EXEMPT SOLICITATION ─── -->
@@ -307,15 +305,10 @@
   .card {
     max-width: 680px; margin: 0 auto; background: #fbfaf7;
     border-radius: 10px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    border-top: 4px solid #c8a84b; /* brand accent in place of the removed navy header */
     font-family: var(--mono, ui-monospace, monospace);
   }
-  .card-head {
-    display: flex; align-items: center; justify-content: space-between;
-    background: #13294b; color: #fff; padding: 16px 20px; border-bottom: 3px solid #c8a84b;
-  }
-  .card-head h3 { margin: 0; font-size: 17px; font-family: Georgia, serif; }
-  .x { color: #fff; text-decoration: none; font-size: 22px; line-height: 1; }
-  .card-body { padding: 22px 24px; }
+  .card-body { padding: 26px 24px 24px; }
 
   .top { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
   .company { margin: 0; font-size: 22px; color: #13294b; font-family: Georgia, serif; }

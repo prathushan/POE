@@ -64,6 +64,7 @@
     else if (attachFilter === "has_es") rows = rows.filter((f) => f.has_exempt_solicitation);
     else if (attachFilter === "no_es")
       rows = rows.filter((f) => f.filing_type === "proposal" && !f.has_exempt_solicitation);
+    else if (attachFilter === "pp_interest") rows = rows.filter((f) => f.proxy_preview_interest);
 
     // keyword search (company, filer, topic, CIK, proposal text, exclusion basis)
     const term = search.trim().toLowerCase();
@@ -94,7 +95,7 @@
   let materialTab = $state("proposal");
 
   // ── point 3: attachment filter (applies to the current tab's rows) ──
-  let attachFilter = $state("all"); // all | has_na | no_na | has_es | no_es
+  let attachFilter = $state("all"); // all | has_na | no_na | has_es | no_es | pp_interest
   function setAttachFilter(v) {
     attachFilter = v;
     applyFilter();
@@ -470,6 +471,7 @@
       <option value="no_na">Without No-Action</option>
       <option value="has_es">Has Exempt Solicitation</option>
       <option value="no_es">Without Exempt Solicitation</option>
+      <option value="pp_interest">Proxy Preview 2027 interest</option>
     </select>
     <span class="filter-count">{filtered.length} result{filtered.length === 1 ? "" : "s"}</span>
   </div>
@@ -989,7 +991,7 @@
   .filing-table thead th {
     background: var(--paper-warm);
     text-align: left;
-    padding: 11px 6px;
+    padding: 11px 8px; /* match the body td default (10px 8px) so headers line up with their column */
     font-size: 10px !important;
     font-weight: 600;
     letter-spacing: 0.06em !important;
@@ -1018,11 +1020,16 @@
   }
 
   /* fixed column widths (sum = 100%) so the table never overflows */
-  th:nth-child(1), td:nth-child(1) { width: 8%; }    /* DATE */
-  th:nth-child(2), td:nth-child(2) { width: 22%; padding-left: 14px; padding-right: 16px; line-height: 1.55; }   /* COMPANY */
-  td:nth-child(2) .sub { display: inline-block; margin-top: 2px; }
+  th:nth-child(1), td:nth-child(1) { width: 10%; padding-left: 18px; white-space: nowrap; }    /* DATE */
+  /* the header cell is styled by ".filing-table thead th" (higher specificity), so
+     match its left padding here too, otherwise the "DATE" label sits closer to the
+     edge than the dates below it. */
+  .filing-table thead th:first-child { padding-left: 18px; }      /* DATE — match td */
+  .filing-table thead th:nth-child(2) { padding-left: 14px; }     /* COMPANY — match td */
+  th:nth-child(2), td:nth-child(2) { width: 22%; padding-left: 14px; padding-right: 16px; line-height: 1.3; }   /* COMPANY */
+  td:nth-child(2) .sub { display: inline-block; margin-top: 1px; }
   th:nth-child(3), td:nth-child(3) { width: 14%; }   /* FILER */
-  th:nth-child(4), td:nth-child(4) { width: 15%; }   /* TOPIC */
+  th:nth-child(4), td:nth-child(4) { width: 13%; }   /* TOPIC */
   th:nth-child(5), td:nth-child(5) { width: 8%; text-align: center; }   /* STATUS */
   th:nth-child(6), td:nth-child(6) { width: 7%; text-align: center; }   /* NO-ACTION */
   th:nth-child(7), td:nth-child(7) { width: 10%; text-align: center; }  /* EXEMPT SOL */
@@ -1232,7 +1239,7 @@
     word-break: break-word;
   }
   .modal-footer {
-    padding: 15px;
+    padding: 15px 28px; /* left/right match .modal-body padding so Edit aligns with the notes box, APPROVE/REJECT with ADD */
     display: flex;
     justify-content: flex-end;
     gap: 10px;
@@ -1269,8 +1276,8 @@
     padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
     font-family: var(--sans) !important; transition: background 0.15s ease, border-color 0.15s ease;
   }
-  .modal-footer .edit-btn { background: #fff; border: 1.5px solid var(--g2); color: var(--g5); margin-right: auto; }
-  .modal-footer .edit-btn:hover { background: var(--paper-warm); border-color: var(--blue-light); color: var(--blue); }
+  .modal-footer .edit-btn { background: var(--blue); border: 1px solid var(--blue); color: #fff; margin-right: auto; }
+  .modal-footer .edit-btn:hover { background: var(--blue-light); border-color: var(--blue-light); color: #fff; }
   .modal-footer .edit-save { background: var(--blue); border: 1px solid var(--blue); color: #fff; margin-right: auto; }
   .modal-footer .edit-save:hover { background: var(--blue-light); }
   .modal-footer .edit-cancel { background: #fff; border: 1px solid var(--g2); color: var(--g5); }

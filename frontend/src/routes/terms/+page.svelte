@@ -107,8 +107,7 @@
   <section>
     <h2>12. Contact</h2>
     <p>
-      As You Sow<br>
-      Email: info@asyousow.org
+      For questions, contact: contact@proxyopenexchange.org
     </p>
   </section>
 

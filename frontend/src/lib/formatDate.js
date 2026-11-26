@@ -3,6 +3,11 @@
 // ambiguity of the browser default.
 export function fmtDate(d) {
   if (!d) return '—';
+  // A date-only or ISO value ("2027-04-17" or "2027-04-17T00:00:00.000Z") is
+  // formatted straight from the string so it never shifts a day across
+  // timezones (the UTC bug) and renders identically on the server and client.
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d));
+  if (m) return `${m[2]}/${m[3]}/${m[1]}`;
   const dt = new Date(d);
   if (isNaN(dt.getTime())) return '—';
   return dt.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });

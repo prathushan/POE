@@ -7,7 +7,13 @@
 
   let materialTab = $state("proposal");
 
-  const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }) : "-");
+  const fmt = (d) => {
+    if (!d) return "-";
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d)); // date-only / ISO → no timezone shift
+    if (m) return `${m[2]}/${m[3]}/${m[1]}`;
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? "-" : dt.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+  };
   const isLegacy = (r) => r && r.filing_type === "exempt_solicitation" && !r.proposal_id;
 
   // ── owner controls ("Your proposal" panel, like /filing/[id]) ──
@@ -41,14 +47,39 @@
   function close() { open = false; }
   $effect(() => { if (open) materialTab = "proposal"; });
 
+  // ── focus management (accessibility) ──
+  // When the dialog opens, remember what was focused, then move focus into the
+  // dialog; restore focus to the opener when it closes. Tab is trapped inside.
+  let modalEl = $state(null);
+  let lastFocused = null;
+  $effect(() => {
+    if (open) {
+      lastFocused = typeof document !== "undefined" ? document.activeElement : null;
+      queueMicrotask(() => modalEl?.focus());
+    } else if (lastFocused && typeof lastFocused.focus === "function") {
+      lastFocused.focus();
+      lastFocused = null;
+    }
+  });
+  function trapFocus(e) {
+    if (e.key !== "Tab" || attachOpen || !modalEl) return; // nested modal manages its own focus
+    const f = modalEl.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
   // ── social share ──
   let copied = $state(false);
-  // Always share the canonical PRODUCTION url. LinkedIn/Facebook/X build the
-  // preview card by crawling the shared url, and they can't reach a private
-  // staging host — so sharing the public prod url makes the preview work from
-  // any environment (staging filings are copies of prod with the same ids).
+  // Share the current environment's URL so the copied/shared link points at the
+  // page the user is actually on (prod → prod, staging → staging). Falls back to
+  // the canonical prod origin during SSR.
   const CANONICAL = "https://proxyopenexchange.org";
-  const shareUrl = $derived(record ? `${CANONICAL}/filing/${record.id}` : "");
+  const shareOrigin = typeof window !== "undefined" ? window.location.origin : CANONICAL;
+  const shareUrl = $derived(record ? `${shareOrigin}/filing/${record.id}` : "");
   const shareTitle = $derived(record ? `${record.company_name || record.subject || "Shareholder Proposal"} — Proxy Open Exchange` : "");
   const liUrl = $derived(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`);
   const xUrl = $derived(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`);
@@ -83,9 +114,9 @@
 
 {#if open && record}
   <div class="pd-overlay" onclick={close} role="presentation">
-    <div class="pd-modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+    <div class="pd-modal" bind:this={modalEl} tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={trapFocus} role="dialog" aria-modal="true" aria-labelledby="pd-title">
       <div class="pd-head">
-        <h3>
+        <h3 id="pd-title">
           {#if isLegacy(record)}Exempt Solicitation — {record.subject || "-"}
           {:else}{record.company_name || "-"} — Shareholder Proposal{/if}
         </h3>
@@ -268,6 +299,10 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .pd-modal { background: #f8f6f1; width: 100%; max-width: 860px; border-radius: 10px; overflow: hidden; box-shadow: 0 26px 72px rgba(0,0,0,0.35); }
+  /* the dialog receives focus on open for accessibility, but it is a container,
+     not a control — suppress the browser's blue focus ring on it (inner controls
+     keep their own focus styles). */
+  .pd-modal:focus, .pd-modal:focus-visible { outline: none; }
   .pd-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: #1a3a5c; color: #fff; padding: 18px 26px; border-bottom: 3px solid #c8a84b; }
   .pd-head h3 { margin: 0; font-size: 18px; font-family: Georgia, "Times New Roman", serif; line-height: 1.25; }
   .pd-x { background: none; border: none; color: #fff; font-size: 26px; cursor: pointer; line-height: 1; flex-shrink: 0; opacity: 0.85; }
@@ -325,7 +360,9 @@
 
   .pd-life { display: flex; justify-content: space-between; gap: 6px; margin: 20px 0 18px; padding: 18px 6px; }
   .pd-step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
-  .pd-step:not(:last-child)::after { content: ""; position: absolute; top: 7px; left: 50%; width: 100%; height: 2px; background: #e3e0d8; z-index: 0; }
+  .pd-step:not(:last-child)::after { content: ""; position: absolute; top: 7px; left: 50%; width: 100%; height: 2px; background: #c3c9d2; z-index: 0; }
+  /* completed steps carry a navy track to the next step, so progress reads clearly */
+  .pd-step.done:not(:last-child)::after { background: #1a3a5c; }
   .pd-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c3c9d2; background: #fbfaf7; z-index: 1; margin-bottom: 6px; }
   .pd-step.done .pd-dot { border-color: #1a3a5c; background: #1a3a5c; }
   .pd-l { font-size: 9.5px; letter-spacing: 0.02em; color: #6b7585; font-weight: 600; line-height: 1.2; }

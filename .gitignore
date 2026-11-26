@@ -1,0 +1,11 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Internal dev / Claude handoff notes — NOT for the client.
+# Keep these out of git and the staging/prod deploys. They're working references
+# only; the staging box builds from this repo, so anything committed is readable.
+# ─────────────────────────────────────────────────────────────────────────────
+*HANDOFF*.md
+POE_HANDOFF_*.md
+
+# Editor / dev tooling — not for the client or the deploy
+.claude/
+.vscode/

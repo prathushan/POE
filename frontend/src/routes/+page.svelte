@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
+  import { goto, pushState } from "$app/navigation";
+  import { page } from "$app/state";
   import ProposalDetail from "$lib/ProposalDetail.svelte";
   import { fmtDate } from "$lib/formatDate.js";
   import linkIcon from "$lib/assets/link-icon.png";
@@ -29,12 +30,33 @@
     // Proposal-centric: clicking a row opens the unified detail popup.
     selectedFiling = filing;
     detailOpen = true;
+    // Reflect the open proposal in the URL via shallow routing, so the link is
+    // shareable and the browser Back button closes the popup (no full navigation).
+    pushState(`/filing/${filing.id}`, { proposalId: filing.id });
   }
 
   function closeModal() {
     detailOpen = false;
     selectedFiling = null;
   }
+
+  // Back/forward: shallow-routing state is the source of truth for whether the
+  // popup is open. When the proposal id leaves the history state (Back pressed),
+  // close the popup.
+  $effect(() => {
+    if (page.state.proposalId == null && detailOpen) {
+      detailOpen = false;
+      selectedFiling = null;
+    }
+  });
+
+  // Popup closed from inside the component (×, Esc, overlay click) while the
+  // proposal URL is still active → pop that entry so the URL returns to the index.
+  $effect(() => {
+    if (!detailOpen && page.state.proposalId != null) {
+      history.back();
+    }
+  });
 
   // the selected proposal's approved attachments (for the detail popup tabs)
   const detailExempt = $derived(

@@ -327,14 +327,17 @@
   .basis-inline { color: #1f2937; line-height: 1.5; }
   .detail-page { background: #eceae4; min-height: 100vh; padding: 30px 16px; }
   .card {
-    max-width: 680px; margin: 0 auto; background: #fbfaf7;
+    max-width: 860px; margin: 0 auto; background: #fbfaf7;
     border-radius: 10px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.12);
     border-top: 4px solid #c8a84b; /* brand accent in place of the removed navy header */
     font-family: var(--mono, ui-monospace, monospace);
   }
   .card-body { padding: 26px 24px 24px; }
 
-  .top { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+  /* let the title block flex so the "Your proposal" panel stays on the right
+     (matches the popup's .pd-header-left) instead of wrapping to its own line */
+  .top-left { flex: 1 1 300px; min-width: 240px; }
   .company { margin: 0; font-size: 22px; color: #13294b; font-family: Georgia, serif; }
   .date { font-size: 12px; color: #777; margin: 6px 0 0; }
   .badge { display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #fef3c7; color: #92400e; white-space: nowrap; vertical-align: middle; }

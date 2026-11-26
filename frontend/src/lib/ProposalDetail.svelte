@@ -284,7 +284,7 @@
     <a class="pd-sbtn fb" href={fbUrl} target="_blank" rel="noreferrer" title="Share on Facebook" aria-label="Facebook">
       <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z"/></svg>
     </a>
-    <a class="pd-sbtn mail" href={mailUrl} title="Share by email" aria-label="Email">
+    <a class="pd-sbtn mail" href={mailUrl} target="_blank" rel="noreferrer" title="Share by email" aria-label="Email">
       <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 4-8 5-8-5V6l8 5 8-5v2Z"/></svg>
     </a>
     {#if copied}<span class="pd-copied">Link copied</span>{/if}

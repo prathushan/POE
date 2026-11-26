@@ -85,6 +85,21 @@
   const xUrl = $derived(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`);
   const fbUrl = $derived(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`);
   const mailUrl = $derived(`mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareUrl)}`);
+  // Email share menu — opens a prefilled compose window in the viewer's own webmail
+  // (Gmail/Outlook, new tab) or their default mail app, so it works without needing a
+  // mailto handler configured in the browser.
+  let mailMenuOpen = $state(false);
+  const gmailUrl = $derived(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareUrl)}`);
+  const outlookUrl = $derived(`https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(shareUrl)}`);
+  function onDocClick(e) { if (mailMenuOpen && !e.target.closest(".mail-wrap")) mailMenuOpen = false; }
+  // Open webmail compose in a normal-sized popup window (not a full browser tab).
+  function openCompose(url) {
+    const w = 680, h = 720;
+    const left = Math.max(0, Math.round((window.screen.width - w) / 2));
+    const top = Math.max(0, Math.round((window.screen.height - h) / 2));
+    window.open(url, "poe-compose", `width=${w},height=${h},left=${left},top=${top}`);
+    mailMenuOpen = false;
+  }
   async function copyLink() {
     const confirm = () => { copied = true; setTimeout(() => (copied = false), 1800); };
     try {
@@ -110,11 +125,11 @@
   }
 </script>
 
-<svelte:window onkeydown={(e) => { if (open && !attachOpen && e.key === "Escape") close(); }} />
+<svelte:window onclick={onDocClick} onkeydown={(e) => { if (open && e.key === "Escape") { if (mailMenuOpen) { mailMenuOpen = false; } else if (!attachOpen) { close(); } } }} />
 
 {#if open && record}
   <div class="pd-overlay" onclick={close} role="presentation">
-    <div class="pd-modal" bind:this={modalEl} tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={trapFocus} role="dialog" aria-modal="true" aria-labelledby="pd-title">
+    <div class="pd-modal" bind:this={modalEl} tabindex="-1" onclick={(e) => { e.stopPropagation(); onDocClick(e); }} onkeydown={trapFocus} role="dialog" aria-modal="true" aria-labelledby="pd-title">
       <div class="pd-head">
         <h3 id="pd-title">
           {#if isLegacy(record)}Exempt Solicitation — {record.subject || "-"}
@@ -284,9 +299,17 @@
     <a class="pd-sbtn fb" href={fbUrl} target="_blank" rel="noreferrer" title="Share on Facebook" aria-label="Facebook">
       <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z"/></svg>
     </a>
-    <a class="pd-sbtn mail" href={mailUrl} target="_blank" rel="noreferrer" title="Share by email" aria-label="Email">
-      <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 4-8 5-8-5V6l8 5 8-5v2Z"/></svg>
-    </a>
+    <span class="mail-wrap">
+      <button class="pd-sbtn mail" title="Share by email" aria-label="Email" aria-haspopup="true" aria-expanded={mailMenuOpen} onclick={() => (mailMenuOpen = !mailMenuOpen)}>
+        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 4-8 5-8-5V6l8 5 8-5v2Z"/></svg>
+      </button>
+      {#if mailMenuOpen}
+        <span class="mail-menu" role="menu">
+          <a role="menuitem" href={gmailUrl} target="_blank" rel="noreferrer" onclick={(e) => { e.preventDefault(); openCompose(gmailUrl); }}>Gmail</a>
+          <a role="menuitem" href={outlookUrl} target="_blank" rel="noreferrer" onclick={(e) => { e.preventDefault(); openCompose(outlookUrl); }}>Outlook</a>
+        </span>
+      {/if}
+    </span>
     {#if copied}<span class="pd-copied">Link copied</span>{/if}
   </div>
 {/snippet}
@@ -336,6 +359,20 @@
   .pd-sbtn.fb:hover { color: #fff; background: #1877f2; border-color: #1877f2; }
   .pd-sbtn.mail:hover { color: #fff; background: #c8a84b; border-color: #c8a84b; }
   .pd-copied { font-size: 11px; color: #15803d; font-weight: 600; }
+
+  /* Email-share dropdown (Gmail / Outlook / default mail app) */
+  .mail-wrap { position: relative; display: inline-flex; }
+  .mail-menu {
+    position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    z-index: 50; min-width: 160px; padding: 5px;
+    background: #fff; border: 1px solid #d9dce2; border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18); display: flex; flex-direction: column;
+  }
+  .mail-menu a {
+    display: block; padding: 8px 12px; border-radius: 6px;
+    font-size: 13px; color: #1f2937; text-decoration: none; white-space: nowrap;
+  }
+  .mail-menu a:hover { background: #eef2fb; color: #1a3a5c; }
 
   /* two-column header: company info left, owner panel top-right (like the artifact) */
   .pd-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
